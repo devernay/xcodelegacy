@@ -12,9 +12,9 @@ Many components were removed in recent versions of Xcode, the most notable being
 
 I made the script XcodeLegacy.sh to extract these components from [Xcode 3.2.6](http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) and [Xcode 4.6.3](http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg), and install them in Xcode 4 or Xcode 5:
 
+- GCC 4.0, GCC 4.2 and LLVM GCC 4.2 compilers
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
 - PPC assembler
-- GCC 4.0 and GCC 4.2
 - Mac OS X SDK 10.4u, 10.5, 10.6 and 10.7
 
 In order to re-enable the GCC 4.2 plugin in Xcode 4, you may also want to edit "/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" and change ShowInCompilerSelectionPopup to "YES" and IsNoLongerSupported to "NO".
