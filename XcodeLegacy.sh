@@ -2,7 +2,7 @@
 # XCodeLegacy.sh
 #
 # Author: Frederic Devernay <frederic.devernay@m4x.org>
-# License: Creative Commons BY-NC-SA 2.5 http://creativecommons.org/licenses/by-nc-sa/2.5/
+# License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 # History:
 # 1.0 (08/10/2012): First public version, supports Xcode up to version 4.6.3
