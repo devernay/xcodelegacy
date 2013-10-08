@@ -3,6 +3,10 @@
 #
 # Author: Frederic Devernay <frederic.devernay@m4x.org>
 # License: Creative Commons BY-NC-SA 2.5 http://creativecommons.org/licenses/by-nc-sa/2.5/
+#
+# History:
+# 1.0 (08/10/2012): First public version, supports Xcode up to version 4.6.3
+# 1.1 (20/09/2013): Xcode 5 removed llvm-gcc and 10.7 SDK support, grab them from Xcode 3 and 4
 
 if [ $# != 1 ]; then
     echo "Usage: $0 buildpackages|install|cleanpackages|uninstall"
@@ -43,13 +47,27 @@ case $1 in
 	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
 	    exit
 	fi
+	if [ ! -f xcode4630916281a.dmg ]; then
+	    echo "you should download Xcode 4.6.3 from:"
+	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+	    echo "or"
+	    echo " https://developer.apple.com/downloads/"
+	    exit
+	fi
         # you should download Xcode 3.2.6 from:
         # http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792
 	hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg
+	if [ ! -d /Volumes/Xcode\ and\ iOS\ SDK ]; then
+	    echo "Error while trying to attach disk image xcode_3.2.6_and_ios_sdk_4.3.dmg"
+	    echo "Aborting"
+	    exit
+	fi
 	rm -rf /tmp/XC3
 	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -i)
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "created XcodePluginGCC40.tar.gz in directory "`pwd`
+	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "created XcodePluginGCC42.tar.gz in directory "`pwd`
+	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
         # should be untarred in /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins
         # gzip -dc XcodePluginGCC40.tar.gz | (cd /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; sudo tar xvf -)
 
@@ -61,6 +79,7 @@ case $1 in
 
 	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
 	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
+	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
 
 	rm -rf /tmp/XC3
 	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3
@@ -81,6 +100,18 @@ case $1 in
 	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.6.sdk) |gzip -c > Xcode106SDK.tar.gz) && echo "created Xcode106SDK.tar.gz in directory "`pwd`
 
 	rm -rf /tmp/XC3
+	hdiutil detach /Volumes/Xcode\ and\ iOS\ SDK
+
+	hdiutil attach xcode4630916281a.dmg
+	if [ ! -d /Volumes/Xcode ]; then
+	    echo "Error while trying to attach disk image xcode4630916281a.dmg"
+	    echo "Aborting"
+	    exit
+	fi
+	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "created Xcode107SDK.tar.gz in directory "`pwd`
+	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
+	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
+	hdiutil detach /Volumes/Xcode
 	;;
 
     install)
@@ -96,6 +127,16 @@ case $1 in
 	else
 	    (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginGCC40.tar.gz"
 	fi
+	if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
+	    echo "not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
+	else
+	    (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginGCC42.tar.gz"
+	fi
+	if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
+	    echo "not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
+	else
+	    (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginLLVMGCC42.tar.gz"
+	fi
 
 	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
 	    echo "not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
@@ -103,7 +144,7 @@ case $1 in
 	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; sudo tar xf -)) && echo "installed XcodePPCas.tar.gz"
 	fi
 	for v in 4.0 4.2; do
-	    for i in c++ cpp g++ gcc gcov; do
+	    for i in c++ cpp g++ gcc gcov llvm-gcc llvm-g++; do
 		if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
 		    sudo ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
 		fi
@@ -114,16 +155,25 @@ case $1 in
 	    echo "not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
 	else
 	    (gzip -dc Xcode104SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode104SDK.tar.gz"
+	    sudo touch "$SDKDIR/SDKs/MacOSX10.4u.sdk/legacy"
 	fi
 	if [ -d "$SDKDIR/SDKs/MacOSX10.5.sdk" ]; then
 	    echo "not installing Xcode105SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.5.sdk, uninstall first to force install)"
 	else
 	    (gzip -dc Xcode105SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode105SDK.tar.gz"
+	    sudo touch "$SDKDIR/SDKs/MacOSX10.5.sdk/legacy"
 	fi
 	if [ -d "$SDKDIR/SDKs/MacOSX10.6.sdk" ]; then
 	    echo "not installing Xcode106SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.6.sdk, uninstall first to force install)"
 	else
 	    (gzip -dc Xcode106SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode106SDK.tar.gz"
+	    sudo touch "$SDKDIR/SDKs/MacOSX10.6.sdk/legacy"
+	fi
+	if [ -d "$SDKDIR/SDKs/MacOSX10.7.sdk" ]; then
+	    echo "not installing Xcode107SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.7.sdk, uninstall first to force install)"
+	else
+	    (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode107SDK.tar.gz"
+	    sudo touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
 	fi
 
 	if [ -f /usr/bin/gcc-4.0 ]; then
@@ -137,6 +187,12 @@ case $1 in
 	else
 	    echo "Installing GCC 4.2"
 	    sudo installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
+	fi
+	if [ -f /usr/bin/llvm-gcc-4.2 ]; then
+	    echo "not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+	else
+	    echo "Installing LLVM GCC 4.2"
+	    sudo installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
 	fi
 	;;
 
@@ -157,8 +213,9 @@ case $1 in
 	sudo rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
 	sudo rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
 	sudo rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
-	sudo rm -rf "$SDKDIR/SDKs/MacOSX10.4u.sdk"
-	sudo rm -rf "$SDKDIR/SDKs/MacOSX10.5u.sdk"
+	for i in 10.4u 10.5 10.6 10.7; do
+	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && sudo rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+	done
 	;;
 
 esac
