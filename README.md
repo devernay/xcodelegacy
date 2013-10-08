@@ -1,14 +1,16 @@
 XcodeLegacy
 ===========
 
-Legacy components for XCode 4 and Xcode 5 (deprecated compilers and Mac OS X SDKs)
+Legacy components for XCode 4 and Xcode 5 (deprecated compilers and Mac OS X SDKs).
+
+Home page: http://devernay.free.fr/hacks/xcodelegacy
 
 Description
 -----------
 
 Many components were removed in recent versions of Xcode, the most notable being the Mac OS X 10.6 SDK, which is required to build software using the Carbon API (such as wxWidgets 2.8).
 
-I made the script XcodeLegacy.sh to extract these components from [http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg](Xcode 3.2.6) and [http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg](Xcode 4.6.3), and install them in Xcode 4 or Xcode 5:
+I made the script XcodeLegacy.sh to extract these components from [Xcode 3.2.6](http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) and [Xcode 4.6.3](http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg), and install them in Xcode 4 or Xcode 5:
 
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
 - PPC assembler
@@ -21,16 +23,19 @@ Note: There may be similar tips to compile for older iOS (not Mac OS X) versions
 
 Download
 --------
-[http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy.sh](XcodeLegacy.sh) (previous versions: [http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh](1.0), [http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh](1.1))
-Usage
+[XcodeLegacy.sh](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh))
 
+[GitHub repository](https://github.com/devernay/xcodelegacy)
+
+Usage
+-----
 Execute the script in a terminal. The script takes one argument, which can be "makepackages" (to extract components from the Xcode 3.2.6 dmg to the current directory), "install" (to install the components in Xcode 4), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
 License
 -------
-This script is distributed under the [http://creativecommons.org/licenses/by-nc-sa/2.5/](Creative Commons BY-NC-SA 2.5 license).
+This script is distributed under the [Creative Commons BY-NC-SA 2.5 license](http://creativecommons.org/licenses/by-nc-sa/2.5/).
 
 History
 -------
