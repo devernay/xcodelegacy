@@ -35,7 +35,7 @@ With the "install" or "uninstall" arguments, the script uses sudo to become root
 
 License
 -------
-This script is distributed under the [Creative Commons BY-NC-SA 2.5 license](http://creativecommons.org/licenses/by-nc-sa/2.5/).
+This script is distributed under the [Creative Commons BY-NC-SA 3.0 license](http://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 History
 -------
