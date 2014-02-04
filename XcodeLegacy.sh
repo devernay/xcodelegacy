@@ -1,21 +1,26 @@
 #!/bin/sh
 # XCodeLegacy.sh
 #
-# Author: Frederic Devernay <frederic.devernay@m4x.org>
+# Original author: Frederic Devernay <frederic.devernay@m4x.org>
+# Contributor: Garrett Walbridge <gwalbridge+xcodelegacy@gmail.com>
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 # History:
 # 1.0 (08/10/2012): First public version, supports Xcode up to version 4.6.3
 # 1.1 (20/09/2013): Xcode 5 removed llvm-gcc and 10.7 SDK support, grab them from Xcode 3 and 4
+# 1.2 (03/02/2014): Xcode 5 broke PPC assembly and linking; fix assembly and grab linker from Xcode 3
 
 if [ $# != 1 ]; then
     echo "Usage: $0 buildpackages|install|cleanpackages|uninstall"
     echo "Description: Extracts / installs / cleans / uninstalls the following components from Xcode 3.2.6,"
     echo "which are not available in Xcode >= 4.2:"
     echo "- GCC 4.0 Xcode plugin"
-    echo "- PPC assembler"
+    echo "- PPC assembler and linker"
     echo "- GCC 4.0 and 4.2"
     echo "- Mac OS X SDK 10.4u, 10.5 and 10.6"
+    echo ""
+    echo "Typically, you will want to run this script with the buildpackages argument first, then the install argument, "
+    echo "and lastly the cleanpackages argument, in order to properly install the legacy Xcode files."
     exit
 fi
 
@@ -45,6 +50,7 @@ case $1 in
 	    echo " http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792"
 	    echo "or"
 	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
+	    echo "and then run this script from within the same directory as the downloaded file"
 	    exit
 	fi
 	if [ ! -f xcode4630916281a.dmg ]; then
@@ -52,6 +58,7 @@ case $1 in
 	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
 	    echo "or"
 	    echo " https://developer.apple.com/downloads/"
+	    echo "and then run this script from within the same directory as the downloaded file"
 	    exit
 	fi
         # you should download Xcode 3.2.6 from:
@@ -76,6 +83,7 @@ case $1 in
 	
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -i --quiet)
 	((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) ||  echo "created XcodePPCas.tar.gz in directory "`pwd`
+	((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) ||  echo "created Xcode3ld.tar.gz in directory "`pwd`
 
 	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
 	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
@@ -141,7 +149,12 @@ case $1 in
 	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
 	    echo "not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
 	else
-	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; sudo tar xf -)) && echo "installed XcodePPCas.tar.gz"
+	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; sudo tar xf -))
+	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
+	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
+	    echo "installed XcodePPCas.tar.gz"
 	fi
 	for v in 4.0 4.2; do
 	    for i in c++ cpp g++ gcc gcov llvm-gcc llvm-g++; do
@@ -150,6 +163,66 @@ case $1 in
 		fi
 	    done
 	done
+
+	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
+		echo "not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
+	else
+		sudo mkdir -p "$GCCDIR/tmp"
+		(gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; sudo tar xf -))
+		sudo cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
+		sudo cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
+		sudo rm -rf "$GCCDIR/tmp"
+	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
+	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
+	    sudo mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+	    sudo cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+#!/bin/bash
+
+ARCH=''
+ARCH_FOUND=0
+for var in "\$@"
+do
+	if [ "\$ARCH_FOUND" -eq '1' ]; then
+		ARCH=\$var
+		break
+	elif [ "\$var" = '-arch' ]; then
+		ARCH_FOUND=1
+	fi
+done
+
+echo "Running ld for \$ARCH ..."
+
+LD_DIR=\`dirname "\$0"\`
+LD_RESULT=255
+if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc64' ]; then
+	ARGS=()
+	DEPINFO_FOUND=0
+	for var in "\$@"; do
+		if [ "\$DEPINFO_FOUND" -eq '1' ]; then
+			DEPINFO_FOUND=0
+			continue
+		elif [ "\$var" = '-dependency_info' ]; then
+			DEPINFO_FOUND=1
+			continue
+		fi
+
+		ARGS+=("\$var")
+	done
+
+	\`\$LD_DIR/../libexec/ld/\$ARCH/ld "\${ARGS[@]}"\`
+	LD_RESULT=\$?
+else
+	\`\$LD_DIR/ld-original "\$@"\`
+	LD_RESULT=\$?
+fi
+
+exit \$LD_RESULT
+LD_EOF
+		sudo chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+		echo "installed Xcode3ld.tar.gz"
+	fi
 
 	if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
 	    echo "not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
@@ -201,7 +274,7 @@ case $1 in
         # PHASE 3: CLEANING
         #
 
-	rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz
+	rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz
 
 	;;
 
@@ -212,6 +285,11 @@ case $1 in
 
 	sudo rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
 	sudo rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
+	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+	sudo mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
 	sudo rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
 	for i in 10.4u 10.5 10.6 10.7; do
 	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && sudo rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
