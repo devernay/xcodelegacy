@@ -1,4 +1,4 @@
-XcodeLegacy
+XcodeLegacy [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devernay/xcodelegacy/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 ===========
 
 Legacy components for XCode 4 and Xcode 5 (deprecated compilers and Mac OS X SDKs).
