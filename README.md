@@ -41,3 +41,7 @@ History
 -------
 - 1.0 (08/10/2012): First public version, supports Xcode up to version 4.6.3
 - 1.1 (20/09/2013): Xcode 5 removed llvm-gcc and 10.7 SDK support, grab them from Xcode 3 and 4
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devernay/xcodelegacy/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
