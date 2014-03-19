@@ -126,6 +126,7 @@ case $1 in
         #######################
         # PHASE 2: INSTALLING
         #
+        echo "Note: This can only be installed by an administrator. The script may prompt for the administrator password."
 	if [ ! -d "$PLUGINDIR" ]; then
 	    echo "Error: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app, cannot install"
 	    exit
@@ -282,6 +283,7 @@ LD_EOF
         #######################
         # PHASE 4: UNINSTALLING
         #
+        echo "Note: This can only be uninstalled by an administrator. The script may prompt for the administrator password."
 
 	sudo rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
 	sudo rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
