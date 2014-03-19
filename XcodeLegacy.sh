@@ -21,6 +21,8 @@ if [ $# != 1 ]; then
     echo ""
     echo "Typically, you will want to run this script with the buildpackages argument first, then the install argument, "
     echo "and lastly the cleanpackages argument, in order to properly install the legacy Xcode files."
+    echo "The install and uninstall phases have to be run with administrative rights, as in:"
+    echo " $ sudo $0 install"
     exit
 fi
 
@@ -126,59 +128,62 @@ case $1 in
         #######################
         # PHASE 2: INSTALLING
         #
-        echo "Note: This can only be installed by an administrator. The script may prompt for the administrator password."
+        if [ ! -w / ]; then
+	    echo "The install phase requires requires administrative rights. Please run it as \"sudo $0 install\""
+	    exit 1
+	fi
 	if [ ! -d "$PLUGINDIR" ]; then
 	    echo "Error: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app, cannot install"
-	    exit
+	    exit 1
 	fi
 	if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
 	    echo "not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
 	else
-	    (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginGCC40.tar.gz"
+	    (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "installed XcodePluginGCC40.tar.gz"
 	fi
 	if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
 	    echo "not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
 	else
-	    (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginGCC42.tar.gz"
+	    (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "installed XcodePluginGCC42.tar.gz"
 	fi
 	if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
 	    echo "not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
 	else
-	    (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; sudo tar xf -)) && echo "installed XcodePluginLLVMGCC42.tar.gz"
+	    (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "installed XcodePluginLLVMGCC42.tar.gz"
 	fi
 
 	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
 	    echo "not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
 	else
-	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; sudo tar xf -))
-	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
-	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
+	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; tar xf -))
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
 	    echo "installed XcodePPCas.tar.gz"
 	fi
 	for v in 4.0 4.2; do
 	    for i in c++ cpp g++ gcc gcov llvm-gcc llvm-g++; do
 		if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
-		    sudo ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
+		    ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
 		fi
 	    done
 	done
 
 	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
-		echo "not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
+	    echo "not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
 	else
-		sudo mkdir -p "$GCCDIR/tmp"
-		(gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; sudo tar xf -))
-		sudo cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
-		sudo cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
-		sudo rm -rf "$GCCDIR/tmp"
-	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-	    sudo mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
-	    sudo ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
-	    sudo mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
-	    sudo cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+	    mkdir -p "$GCCDIR/tmp"
+	    (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; tar xf -))
+	    cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
+	    cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
+	    rm -rf "$GCCDIR/tmp"
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
+	    mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+	    cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
 #!/bin/bash
 
 ARCH=''
@@ -221,52 +226,52 @@ fi
 
 exit \$LD_RESULT
 LD_EOF
-		sudo chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-		echo "installed Xcode3ld.tar.gz"
+	    chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+	    echo "installed Xcode3ld.tar.gz"
 	fi
 
 	if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
 	    echo "not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
 	else
-	    (gzip -dc Xcode104SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode104SDK.tar.gz"
-	    sudo touch "$SDKDIR/SDKs/MacOSX10.4u.sdk/legacy"
+	    (gzip -dc Xcode104SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode104SDK.tar.gz"
+	    touch "$SDKDIR/SDKs/MacOSX10.4u.sdk/legacy"
 	fi
 	if [ -d "$SDKDIR/SDKs/MacOSX10.5.sdk" ]; then
 	    echo "not installing Xcode105SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.5.sdk, uninstall first to force install)"
 	else
-	    (gzip -dc Xcode105SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode105SDK.tar.gz"
-	    sudo touch "$SDKDIR/SDKs/MacOSX10.5.sdk/legacy"
+	    (gzip -dc Xcode105SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode105SDK.tar.gz"
+	    touch "$SDKDIR/SDKs/MacOSX10.5.sdk/legacy"
 	fi
 	if [ -d "$SDKDIR/SDKs/MacOSX10.6.sdk" ]; then
 	    echo "not installing Xcode106SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.6.sdk, uninstall first to force install)"
 	else
-	    (gzip -dc Xcode106SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode106SDK.tar.gz"
-	    sudo touch "$SDKDIR/SDKs/MacOSX10.6.sdk/legacy"
+	    (gzip -dc Xcode106SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode106SDK.tar.gz"
+	    touch "$SDKDIR/SDKs/MacOSX10.6.sdk/legacy"
 	fi
 	if [ -d "$SDKDIR/SDKs/MacOSX10.7.sdk" ]; then
 	    echo "not installing Xcode107SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.7.sdk, uninstall first to force install)"
 	else
-	    (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; sudo tar xf -)) && echo "installed Xcode107SDK.tar.gz"
-	    sudo touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
+	    (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode107SDK.tar.gz"
+	    touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
 	fi
 
 	if [ -f /usr/bin/gcc-4.0 ]; then
 	    echo "not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
 	else
 	    echo "Installing GCC 4.0"
-	    sudo installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
+	    installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
 	fi
 	if [ -f /usr/bin/gcc-4.2 ]; then
 	    echo "not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
 	else
 	    echo "Installing GCC 4.2"
-	    sudo installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
+	    installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
 	fi
 	if [ -f /usr/bin/llvm-gcc-4.2 ]; then
 	    echo "not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
 	else
 	    echo "Installing LLVM GCC 4.2"
-	    sudo installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
+	    installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
 	fi
 	;;
 
@@ -283,18 +288,21 @@ LD_EOF
         #######################
         # PHASE 4: UNINSTALLING
         #
-        echo "Note: This can only be uninstalled by an administrator. The script may prompt for the administrator password."
+        if [ ! -w / ]; then
+	    echo "The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
+	    exit 1
+	fi
 
-	sudo rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
-	sudo rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
-	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-	sudo rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-	sudo mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-	sudo rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+	rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
+	rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+	mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+	rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
 	for i in 10.4u 10.5 10.6 10.7; do
-	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && sudo rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
 	done
 	;;
 
