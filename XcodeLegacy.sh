@@ -17,7 +17,7 @@ if [ $# != 1 ]; then
     echo "- GCC 4.0 Xcode plugin"
     echo "- PPC assembler and linker"
     echo "- GCC 4.0 and 4.2"
-    echo "- Mac OS X SDK 10.4u, 10.5 and 10.6"
+    echo "- Mac OS X SDK 10.4u, 10.5, 10.6 and 10.7"
     echo ""
     echo "Typically, you will want to run this script with the buildpackages argument first, then the install argument, "
     echo "and lastly the cleanpackages argument, in order to properly install the legacy Xcode files."
@@ -280,7 +280,7 @@ LD_EOF
         # PHASE 3: CLEANING
         #
 
-	rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz
+	rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz xcode_3.2.6_llvm-gcc4.2.pkg Xcode107SDK.tar.gz XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz
 
 	;;
 
