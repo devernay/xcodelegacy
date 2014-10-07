@@ -12,12 +12,12 @@
 
 if [ $# != 1 ]; then
     echo "Usage: $0 buildpackages|install|cleanpackages|uninstall"
-    echo "Description: Extracts / installs / cleans / uninstalls the following components from Xcode 3.2.6,"
+    echo "Description: Extracts / installs / cleans / uninstalls the following components from Xcode 3.2.6, Xcode 4.6.3 and Xcode 5.1.1,"
     echo "which are not available in Xcode >= 4.2:"
     echo "- GCC 4.0 Xcode plugin"
     echo "- PPC assembler and linker"
     echo "- GCC 4.0 and 4.2"
-    echo "- Mac OS X SDK 10.4u, 10.5, 10.6 and 10.7"
+    echo "- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7 and 10.8"
     echo ""
     echo "Typically, you will want to run this script with the buildpackages argument first, then the install argument, "
     echo "and lastly the cleanpackages argument, in order to properly install the legacy Xcode files."
@@ -58,6 +58,14 @@ case $1 in
 	if [ ! -f xcode4630916281a.dmg ]; then
 	    echo "you should download Xcode 4.6.3 from:"
 	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+	    echo "or"
+	    echo " https://developer.apple.com/downloads/"
+	    echo "and then run this script from within the same directory as the downloaded file"
+	    exit
+	fi
+	if [ ! -f xcode_5.1.1.dmg ]; then
+	    echo "you should download Xcode 5.1.1 from:"
+	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
 	    echo "or"
 	    echo " https://developer.apple.com/downloads/"
 	    echo "and then run this script from within the same directory as the downloaded file"
@@ -121,6 +129,16 @@ case $1 in
 	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "created Xcode107SDK.tar.gz in directory "`pwd`
 	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
 	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
+	hdiutil detach /Volumes/Xcode
+	;;
+
+	hdiutil attach xcode_5.1.1.dmg
+	if [ ! -d /Volumes/Xcode ]; then
+	    echo "Error while trying to attach disk image xcode_5.1.1.dmg"
+	    echo "Aborting"
+	    exit
+	fi
+	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "created Xcode108SDK.tar.gz in directory "`pwd`
 	hdiutil detach /Volumes/Xcode
 	;;
 
@@ -254,6 +272,12 @@ LD_EOF
 	    (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode107SDK.tar.gz"
 	    touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
 	fi
+	if [ -d "$SDKDIR/SDKs/MacOSX10.8.sdk" ]; then
+	    echo "not installing Xcode108SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.8.sdk, uninstall first to force install)"
+	else
+	    (gzip -dc Xcode108SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "installed Xcode108SDK.tar.gz"
+	    touch "$SDKDIR/SDKs/MacOSX10.8.sdk/legacy"
+	fi
 
 	if [ -f /usr/bin/gcc-4.0 ]; then
 	    echo "not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -301,7 +325,7 @@ LD_EOF
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
 	mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
 	rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
-	for i in 10.4u 10.5 10.6 10.7; do
+	for i in 10.4u 10.5 10.6 10.7 10.8; do
 	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
 	done
 	;;
