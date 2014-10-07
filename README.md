@@ -23,13 +23,13 @@ Note: There may be similar tips to compile for older iOS (not Mac OS X) versions
 
 Download
 --------
-[XcodeLegacy.sh](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh))
+[XcodeLegacy.sh](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh), [1.2](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.2.sh))
 
 [GitHub repository](https://github.com/devernay/xcodelegacy)
 
 Usage
 -----
-Execute the script in a terminal. The script takes one argument, which can be "makepackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode).
+Execute the script in a terminal. The script takes one argument, which can be "makepackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4/5/6), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4/5/6).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
