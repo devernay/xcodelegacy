@@ -130,7 +130,6 @@ case $1 in
 	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
 	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
 	hdiutil detach /Volumes/Xcode
-	;;
 
 	hdiutil attach xcode_5.1.1.dmg
 	if [ ! -d /Volumes/Xcode ]; then
