@@ -199,7 +199,10 @@ case $1 in
 	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
 	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
 	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
-	    mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+	    # prevent overwriting the original ld if the script is run twice
+	    if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
+		mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+	    fi
 	    cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
 #!/bin/bash
 
