@@ -29,7 +29,7 @@ Download
 
 Usage
 -----
-Execute the script in a terminal. The script takes one argument, which can be "makepackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4/5/6), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4/5/6).
+Execute the script in a terminal. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4/5/6), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4/5/6).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
