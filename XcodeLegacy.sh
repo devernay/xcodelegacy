@@ -109,6 +109,9 @@ case $1 in
 	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -i)
         # should we install more than these? (fixed includes?)
+	# Add links to libstdc++ so that "g++-4.0 -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk" works
+	ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
+	ln -s ../../../i686-apple-darwin10/4.2.1/libstdc++.dylib /tmp/XC3/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.2.1/libstdc++.dylib
 	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.5.sdk) |gzip -c > Xcode105SDK.tar.gz) && echo "created Xcode105SDK.tar.gz in directory "`pwd`
 
 	rm -rf /tmp/XC3
