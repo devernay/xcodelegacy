@@ -81,7 +81,7 @@ case $1 in
 	fi
 	rm -rf /tmp/XC3
 	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -i)
+	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "created XcodePluginGCC40.tar.gz in directory "`pwd`
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "created XcodePluginGCC42.tar.gz in directory "`pwd`
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
