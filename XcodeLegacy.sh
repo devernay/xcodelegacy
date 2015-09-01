@@ -93,7 +93,7 @@ case $1 in
 	    echo "and then run this script from within the same directory as the downloaded file"
 	    exit
 	fi
-	
+
         # you should download Xcode 3.2.6 from:
         # http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792
 	hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg
@@ -113,7 +113,7 @@ case $1 in
 
 	rm -rf /tmp/XC3
 	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/DeveloperToolsCLI.pkg /tmp/XC3
-	
+
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
 	((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "created XcodePPCas.tar.gz in directory "`pwd`
 	((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "created Xcode3ld.tar.gz in directory "`pwd`
@@ -232,8 +232,12 @@ case $1 in
 	    cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
 	    rm -rf "$GCCDIR/tmp"
 	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
+	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
 	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
 	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
+	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
 	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
 	    # prevent overwriting the original ld if the script is run twice
 	    if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
@@ -258,7 +262,7 @@ echo "Running ld for \$ARCH ..."
 
 LD_DIR=\`dirname "\$0"\`
 LD_RESULT=255
-if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc64' ]; then
+if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH" = 'ppc64' ]; then
 	ARGS=()
 	DEPINFO_FOUND=0
 	for var in "\$@"; do
@@ -284,6 +288,54 @@ exit \$LD_RESULT
 LD_EOF
 	    chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
 	    echo "installed Xcode3ld.tar.gz"
+	fi
+
+	if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+	    echo "not modifying MacOSX Architectures.xcspec (found original at $SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
+	else
+		mv "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
+		{ awk 'NR>1{print l}{l=$0}' "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+	{
+		Type = Architecture;
+		Identifier = ppc;
+		Name = "Minimal (32-bit PowerPC only)";
+		Description = "32-bit PowerPC";
+		"PerArchBuildSettingName" = PowerPC;
+		ByteOrder = big;
+		ListInEnum = YES;
+		SortNumber = 201;
+	},
+	{
+		Type = Architecture;
+		Identifier = ppc7400;
+		Name = "PowerPC G4";
+		Description = "32-bit PowerPC for G4 processor";
+		ByteOrder = big;
+		ListInEnum = YES;
+		SortNumber = 202;
+	},
+	{
+		Type = Architecture;
+		Identifier = ppc970;
+		Name = "PowerPC G5 32-bit";
+		Description = "32-bit PowerPC for G5 processor";
+		ByteOrder = big;
+		ListInEnum = YES;
+		SortNumber = 203;
+	},
+	{
+		Type = Architecture;
+		Identifier = ppc64;
+		Name = "PowerPC 64-bit";
+		Description = "64-bit PowerPC";
+		"PerArchBuildSettingName" = "PowerPC 64-bit";
+		ByteOrder = big;
+		ListInEnum = YES;
+		SortNumber = 204;
+	},
+)
+SPEC_EOF
+	    echo "modified MacOSX Architectures.xcspec"
 	fi
 
 	if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
@@ -364,7 +416,6 @@ LD_EOF
         #
         if [ ! -w / ]; then
 	    echo "The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
-	    echo "The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
 	    exit 1
 	fi
 
@@ -373,9 +424,12 @@ LD_EOF
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
+	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
 	mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-	rm -rf "$GCCDIR/usr/bin/*4.0" "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+	rm -rf "$GCCDIR/usr/bin/"*4.0 "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+	mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
 	for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
 	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
 	done
