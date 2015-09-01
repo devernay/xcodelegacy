@@ -412,7 +412,6 @@ SPEC_EOF
         #
         if [ ! -w / ]; then
 	    echo "The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
-	    echo "The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
 	    exit 1
 	fi
 
