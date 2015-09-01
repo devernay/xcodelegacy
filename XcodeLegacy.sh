@@ -94,16 +94,18 @@ case $1 in
 	    exit
 	fi
 
+	MNTDIR=`mktemp -d mount.XXX`
+	ATTACH_OPTS="-nobrowse -mountroot $MNTDIR"
         # you should download Xcode 3.2.6 from:
         # http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792
-	hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg
-	if [ ! -d /Volumes/Xcode\ and\ iOS\ SDK ]; then
+	hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg $ATTACH_OPTS
+	if [ ! -d $MNTDIR/Xcode\ and\ iOS\ SDK ]; then
 	    echo "Error while trying to attach disk image xcode_3.2.6_and_ios_sdk_4.3.dmg"
 	    echo "Aborting"
 	    exit
 	fi
 	rm -rf /tmp/XC3
-	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "created XcodePluginGCC40.tar.gz in directory "`pwd`
 	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "created XcodePluginGCC42.tar.gz in directory "`pwd`
@@ -112,24 +114,24 @@ case $1 in
         # gzip -dc XcodePluginGCC40.tar.gz | (cd /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; sudo tar xvf -)
 
 	rm -rf /tmp/XC3
-	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/DeveloperToolsCLI.pkg /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperToolsCLI.pkg /tmp/XC3
 
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
 	((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "created XcodePPCas.tar.gz in directory "`pwd`
 	((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "created Xcode3ld.tar.gz in directory "`pwd`
 
-	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
-	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
-	(cp /Volumes/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
+	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
+	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
+	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
 
 	rm -rf /tmp/XC3
-	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
         # should we install more than these? (fixed includes?)
 	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "created Xcode104SDK.tar.gz in directory "`pwd`
 
 	rm -rf /tmp/XC3
-	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
         # should we install more than these? (fixed includes?)
 	# Add links to libstdc++ so that "g++-4.0 -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk" works
@@ -138,43 +140,47 @@ case $1 in
 	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.5.sdk) |gzip -c > Xcode105SDK.tar.gz) && echo "created Xcode105SDK.tar.gz in directory "`pwd`
 
 	rm -rf /tmp/XC3
-	pkgutil --expand /Volumes/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.6.pkg /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.6.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.6.sdk)
         # should we install more than these? (fixed includes?)
 	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.6.sdk) |gzip -c > Xcode106SDK.tar.gz) && echo "created Xcode106SDK.tar.gz in directory "`pwd`
 
 	rm -rf /tmp/XC3
-	hdiutil detach /Volumes/Xcode\ and\ iOS\ SDK
+	hdiutil detach $MNTDIR/Xcode\ and\ iOS\ SDK
 
-	hdiutil attach xcode4630916281a.dmg
-	if [ ! -d /Volumes/Xcode ]; then
+	hdiutil attach xcode4630916281a.dmg $ATTACH_OPTS
+	if [ ! -d $MNTDIR/Xcode ]; then
 	    echo "Error while trying to attach disk image xcode4630916281a.dmg"
 	    echo "Aborting"
+	    rmdir $MNTDIR
 	    exit
 	fi
-	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "created Xcode107SDK.tar.gz in directory "`pwd`
-	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
-	((cd /Volumes/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
-	hdiutil detach /Volumes/Xcode
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "created Xcode107SDK.tar.gz in directory "`pwd`
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
+	hdiutil detach $MNTDIR/Xcode
 
-	hdiutil attach xcode_5.1.1.dmg
-	if [ ! -d /Volumes/Xcode ]; then
+	hdiutil attach xcode_5.1.1.dmg $ATTACH_OPTS
+	if [ ! -d $MNTDIR/Xcode ]; then
 	    echo "Error while trying to attach disk image xcode_5.1.1.dmg"
 	    echo "Aborting"
+	    rmdir $MNTDIR
 	    exit
 	fi
-	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "created Xcode108SDK.tar.gz in directory "`pwd`
-	hdiutil detach /Volumes/Xcode
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "created Xcode108SDK.tar.gz in directory "`pwd`
+	hdiutil detach $MNTDIR/Xcode
 
-	hdiutil attach Xcode_6.4.dmg
-	if [ ! -d /Volumes/Xcode ]; then
+	hdiutil attach Xcode_6.4.dmg $ATTACH_OPTS
+	if [ ! -d $MNTDIR/Xcode ]; then
 	    echo "Error while trying to attach disk image Xcode_6.4.dmg"
 	    echo "Aborting"
+	    rmdir $MNTDIR
 	    exit
 	fi
-	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.9.sdk) |gzip -c > Xcode109SDK.tar.gz) && echo "created Xcode109SDK.tar.gz in directory "`pwd`
-	((cd /Volumes/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "created Xcode1010SDK.tar.gz in directory "`pwd`
-	hdiutil detach /Volumes/Xcode
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.9.sdk) |gzip -c > Xcode109SDK.tar.gz) && echo "created Xcode109SDK.tar.gz in directory "`pwd`
+	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "created Xcode1010SDK.tar.gz in directory "`pwd`
+	hdiutil detach $MNTDIR/Xcode
+	rmdir $MNTDIR
 	;;
 
     install|installbeta)
