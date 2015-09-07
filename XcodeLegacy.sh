@@ -222,7 +222,7 @@ case $1 in
 	    echo "installed XcodePPCas.tar.gz"
 	fi
 	for v in 4.0 4.2; do
-	    for i in c++ cpp g++ gcc gcov llvm-gcc llvm-g++; do
+	    for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
 		if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
 		    ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
 		fi
