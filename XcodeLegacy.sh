@@ -435,6 +435,7 @@ SPEC_EOF
 	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
 	mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
 	rm -rf "$GCCDIR/usr/bin/"*4.0 "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+	rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
 	mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
 	for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
 	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
