@@ -55,6 +55,17 @@ if [ "$1" = "installbeta" -o "$1" = "uninstallbeta" ]; then
     GCCDIR="/Applications/Xcode-beta.app/Contents/Developer"
     SDKDIR="/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer"
 fi
+SANDBOX=0
+GCCINSTALLDIR="$GCCDIR/Toolchains/XcodeDefault.xctoolchain"
+GCCLINKDIR=/usr
+if [ `uname -r | awk -F. '{print $1}'` -gt 14 ]; then
+    # on OSX 10.11 El Capitan, nothing can be installed in /usr because of the Sandbox
+    # install in Xcode instead, and put links in /usr/local
+    SANDBOX=1
+    GCCLINKDIR=/usr/local
+fi
+
+GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/man/man7/gpl.7 usr/share/man/man1/*-4.0.1 usr/share/man/man1/*-4.0.1.1 usr/libexec/gcc/*-apple-darwin10/4.0.1 usr/lib/gcc/*-apple-darwin10/4.0.1 usr/include/gcc/darwin/4.0 usr/bin/*-4.0 usr/bin/*-4.0.1 usr/share/man/man1/*-4.2.1 usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1 usr/llvm-gcc-4.2 usr/share/man/man1/llvm-g*.1.gz usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1"
 
 case $1 in
     buildpackages)
@@ -349,6 +360,16 @@ done
 echo "Running ld for \$ARCH ..."
 
 LD_DIR=\`dirname "\$0"\`
+if [ -f "\$LD_DIR/ld-original" ]; then
+        LDORIGINAL="\$LD_DIR/ld-original"
+elif [ -f "\$LD_DIR/../../../../bin/ld-original" ]; then
+        LDORIGINAL="\$LD_DIR/../../../../bin/ld-original"
+elif [ -f "\$LD_DIR/../../../../../bin/ld-original" ]; then
+        LDORIGINAL="\$LD_DIR/../../../../../bin/ld-original"
+else
+        echo "Error: cannot find ld-original in \$LD_DIR or \$LD_DIR/../../../../bin"
+        exit 1
+fi
 LD_RESULT=255
 if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH" = 'ppc64' ]; then
         ARGS=()
@@ -364,11 +385,21 @@ if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH"
 
                 ARGS+=("\$var")
         done
-
-        \`\$LD_DIR/../libexec/ld/\$ARCH/ld "\${ARGS[@]}"\`
+        if [ -f "\$LD_DIR/../libexec/ld/\$ARCH/ld" ]; then
+                LD="\$LD_DIR/../libexec/ld/\$ARCH/ld"
+        elif [ -f "\$LD_DIR/../../../libexec/ld/\$ARCH/ld" ]; then
+                LD="\$LD_DIR/../../../libexec/ld/\$ARCH/ld"
+        elif [ -f "\$LD_DIR/../../../../libexec/ld/\$ARCH/ld" ]; then
+                LD="\$LD_DIR/../../../../libexec/ld/\$ARCH/ld"
+        else
+                echo "Error: cannot find ld for \$ARCH in \$LD_DIR/../libexec/ld/\$ARCH \$LD_DIR/../../../libexec/ld/\$ARCH or \$LD_DIR/../../../../libexec/ld/\$ARCH"
+                exit 1
+        fi
+        
+        \`\$LD "\${ARGS[@]}"\`
         LD_RESULT=\$?
 else
-        \`\$LD_DIR/ld-original "\$@"\`
+        \`\$LDORIGINAL "\$@"\`
         LD_RESULT=\$?
 fi
 
@@ -472,26 +503,37 @@ SPEC_EOF
         if [ -f /usr/bin/gcc-4.0 ]; then
             #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
             echo "*** Not installing Xcode3gcc40.tar.gz (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
+        elif [ -f "$GCCINSTALLDIR/usr/bin/gcc-4.0" ]; then
+            echo "*** Not installing Xcode3gcc40.tar.gz (found installed in $GCCINSTALLDIR/usr/bin/gcc-4.0, uninstall first to force install)"
         else
             echo "*** Installing GCC 4.0"
             #installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
-            (gzip -dc Xcode3gcc40.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc40.tar.gz"
+            (gzip -dc Xcode3gcc40.tar.gz | (cd "$GCCINSTALLDIR"; tar xf -)) && echo "*** installed Xcode3gcc40.tar.gz"
         fi
         if [ -f /usr/bin/gcc-4.2 ]; then
             #echo "*** Not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
             echo "*** Not installing Xcode3gcc42.tar.gz (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
+        elif [ -f "$GCCINSTALLDIR/usr/bin/gcc-4.2" ]; then
+            echo "*** Not installing Xcode3gcc42.tar.gz (found installed in $GCCINSTALLDIR/usr/bin/gcc-4.2, uninstall first to force install)"
         else
             echo "*** Installing GCC 4.2"
             #installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
-            (gzip -dc Xcode3gcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
+            (gzip -dc Xcode3gcc42.tar.gz | (cd "$GCCINSTALLDIR"; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
         fi
         if [ -f /usr/bin/llvm-gcc-4.2 ]; then
             #echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
             echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+        elif [ -f "$GCCINSTALLDIR/usr/bin/llvm-gcc-4.2" ]; then
+            echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in $GCCINSTALLDIR/usr/bin/llvm-gcc-4.2, uninstall first to force install)"
         else
             echo "*** Installing LLVM GCC 4.2"
             #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
-            (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
+            (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$GCCINSTALLDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
+        fi
+        if [ ! -f $GCCLINKDIR/bin/llvm-gcc-4.2 ]; then
+            echo "*** Creating symbolic links to compilers in $GCCLINKDIR:"
+            echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
+            for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/$b $GCCLINKDIR/bin/$b; done
         fi
         ;;
 
@@ -522,15 +564,24 @@ SPEC_EOF
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
         mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-        rm -rf "$GCCDIR/usr/bin/"*4.0 "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+        (cd "$GCCDIR"; rm -rf $GCCFILES)
+        (cd "$GCCINSTALLDIR"; rm -rf $GCCFILES)
         rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
         mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
         for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
           [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         done
+        for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do
+            if [ -L $GCCLINKDIR/bin/$b ]; then
+                rm $GCCLINKDIR/bin/$b
+            fi
+        done
+
         ;;
 
 esac
+
+
 
 # Local variables:
 # mode: shell-script
