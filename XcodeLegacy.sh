@@ -39,7 +39,7 @@ if [ -d "$PLUGINDIR" ]; then
 else
     PLUGINDIR="/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
     if [ ! -d "$PLUGINDIR" ]; then
-	echo "Info: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app"
+        echo "Info: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app"
     fi
     echo "*** Info: found Xcode >= 4.3"
     GCCDIR="/Applications/Xcode.app/Contents/Developer"
@@ -49,7 +49,7 @@ fi
 if [ "$1" = "installbeta" -o "$1" = "uninstallbeta" ]; then
     PLUGINDIR="/Applications/Xcode-beta.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
     if [ ! -d "$PLUGINDIR" ]; then
-	echo "*** Info: could not find Xcode beta in /Applications/Xcode-beta.app"
+        echo "*** Info: could not find Xcode beta in /Applications/Xcode-beta.app"
     fi
     echo "*** Info: found Xcode beta"
     GCCDIR="/Applications/Xcode-beta.app/Contents/Developer"
@@ -61,91 +61,91 @@ case $1 in
         #######################
         # PHASE 1: PACKAGING
         #
-	if [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
-	    echo "*** you should download Xcode 3.2.6 from:"
-	    echo " http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792"
-	    echo "or"
-	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
-	    echo "and then run this script from within the same directory as the downloaded file"
-	    exit
-	fi
-	if [ ! -f xcode4630916281a.dmg ]; then
-	    echo "*** you should download Xcode 4.6.3 from:"
-	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-	    echo "or"
-	    echo " https://developer.apple.com/downloads/"
-	    echo "and then run this script from within the same directory as the downloaded file"
-	    exit
-	fi
-	if [ ! -f xcode_5.1.1.dmg ]; then
-	    echo "*** you should download Xcode 5.1.1 from:"
-	    echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
-	    echo "or"
-	    echo " https://developer.apple.com/downloads/"
-	    echo "and then run this script from within the same directory as the downloaded file"
-	    exit
-	fi
-	if [ ! -f Xcode_6.4.dmg ]; then
-	    echo "*** you should download Xcode 6.4 from:"
-	    echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
-	    echo "or"
-	    echo " https://developer.apple.com/downloads/"
-	    echo "and then run this script from within the same directory as the downloaded file"
-	    exit
-	fi
+        if [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
+            echo "*** you should download Xcode 3.2.6 from:"
+            echo " http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792"
+            echo "or"
+            echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
+            echo "and then run this script from within the same directory as the downloaded file"
+            exit
+        fi
+        if [ ! -f xcode4630916281a.dmg ]; then
+            echo "*** you should download Xcode 4.6.3 from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+            echo "or"
+            echo " https://developer.apple.com/downloads/"
+            echo "and then run this script from within the same directory as the downloaded file"
+            exit
+        fi
+        if [ ! -f xcode_5.1.1.dmg ]; then
+            echo "*** you should download Xcode 5.1.1 from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo "or"
+            echo " https://developer.apple.com/downloads/"
+            echo "and then run this script from within the same directory as the downloaded file"
+            exit
+        fi
+        if [ ! -f Xcode_6.4.dmg ]; then
+            echo "*** you should download Xcode 6.4 from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo "or"
+            echo " https://developer.apple.com/downloads/"
+            echo "and then run this script from within the same directory as the downloaded file"
+            exit
+        fi
 
-	MNTDIR=`mktemp -d mount.XXX`
-	ATTACH_OPTS="-nobrowse -mountroot $MNTDIR"
+        MNTDIR=`mktemp -d mount.XXX`
+        ATTACH_OPTS="-nobrowse -mountroot $MNTDIR"
         # you should download Xcode 3.2.6 from:
         # http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792
-	hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg $ATTACH_OPTS
-	if [ ! -d $MNTDIR/Xcode\ and\ iOS\ SDK ]; then
-	    echo "*** Error while trying to attach disk image xcode_3.2.6_and_ios_sdk_4.3.dmg"
-	    echo "Aborting"
-	    exit
-	fi
-	rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "*** Created XcodePluginGCC40.tar.gz in directory "`pwd`
-	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "*** Created XcodePluginGCC42.tar.gz in directory "`pwd`
-	((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
+        hdiutil attach xcode_3.2.6_and_ios_sdk_4.3.dmg $ATTACH_OPTS
+        if [ ! -d $MNTDIR/Xcode\ and\ iOS\ SDK ]; then
+            echo "*** Error while trying to attach disk image xcode_3.2.6_and_ios_sdk_4.3.dmg"
+            echo "Aborting"
+            exit
+        fi
+        rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperTools.pkg /tmp/XC3
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+        ((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "*** Created XcodePluginGCC40.tar.gz in directory "`pwd`
+        ((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "*** Created XcodePluginGCC42.tar.gz in directory "`pwd`
+        ((cd /tmp/XC3/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
         # should be untarred in /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins
         # gzip -dc XcodePluginGCC40.tar.gz | (cd /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; sudo tar xvf -)
 
-	rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperToolsCLI.pkg /tmp/XC3
+        rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/DeveloperToolsCLI.pkg /tmp/XC3
 
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-	((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "*** Created XcodePPCas.tar.gz in directory "`pwd`
-	((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory "`pwd`
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+        ((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "*** Created XcodePPCas.tar.gz in directory "`pwd`
+        ((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory "`pwd`
 
-	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
-	rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg /tmp/XC3
+        #(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
+        rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg /tmp/XC3
 
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc40.tar.gz) && echo "*** Created Xcode3gcc40.tar.gz in directory "`pwd`
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+        ((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc40.tar.gz) && echo "*** Created Xcode3gcc40.tar.gz in directory "`pwd`
 
-	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
-	rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg /tmp/XC3
+        #(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
+        rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg /tmp/XC3
 
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc42.tar.gz) && echo "*** Created Xcode3gcc42.tar.gz in directory "`pwd`
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+        ((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc42.tar.gz) && echo "*** Created Xcode3gcc42.tar.gz in directory "`pwd`
 
-	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
-	rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg /tmp/XC3
+        #(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
+        rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg /tmp/XC3
 
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3llvmgcc42.tar.gz) && echo "*** Created Xcode3llvmgcc42.tar.gz in directory "`pwd`
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+        ((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3llvmgcc42.tar.gz) && echo "*** Created Xcode3llvmgcc42.tar.gz in directory "`pwd`
 
-	rm -rf /tmp/XC3
+        rm -rf /tmp/XC3
 
-	cat > /tmp/hashtable.patch <<EOF
---- hashtable.orig	2015-09-01 14:43:32.000000000 +0200
-+++ hashtable	2010-09-03 22:41:42.000000000 +0200
+        cat > /tmp/hashtable.patch <<EOF
+--- hashtable.orig      2015-09-01 14:43:32.000000000 +0200
++++ hashtable   2010-09-03 22:41:42.000000000 +0200
 @@ -860,7 +860,7 @@
    typedef typename Internal::IF<unique_keys, std::pair<iterator, bool>, iterator>::type
            Insert_Return_Type;
@@ -159,16 +159,16 @@ case $1 in
        node* n = ht.m_buckets[i];
        node** tail = m_buckets + i;
        while (n) {
--	*tail = m_allocate_node (n);
--	(*tail).copy_code_from (n);
-+	// 	*tail = m_allocate_node (n);
-+	// 	(*tail).copy_code_from (n);
-+	*tail = m_allocate_node (n->m_v);
- 	tail = &((*tail)->m_next);
- 	n = n->m_next;
+-       *tail = m_allocate_node (n);
+-       (*tail).copy_code_from (n);
++       //      *tail = m_allocate_node (n);
++       //      (*tail).copy_code_from (n);
++       *tail = m_allocate_node (n->m_v);
+        tail = &((*tail)->m_next);
+        n = n->m_next;
        }
 @@ -1216,7 +1217,7 @@
- 	  bool c, bool m, bool u>
+          bool c, bool m, bool u>
  typename hashtable<K,V,A,Ex,Eq,H1,H2,H,RP,c,m,u>::node* 
  hashtable<K,V,A,Ex,Eq,H1,H2,H,RP,c,m,u>
 -::find_node (node* p, const key_type& k, typename hashtable::hash_code_t code)
@@ -177,173 +177,173 @@ case $1 in
    for ( ; p ; p = p->m_next)
      if (this->compare (k, code, p))
 EOF
-	test -d /tmp/XC3-10.4 && rm -rf /tmp/XC3-10.4
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3-10.4
-	(cd /tmp/XC3-10.4;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
-	# should we install more than these? (fixed includes?)
-	# Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
-	ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
-	# Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
-	ln -s libstdc++.6.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/libstdc++.dylib
-	# Fix tr1/hashtable
-	# see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
-	# in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
-	(cd /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1; patch -p0 -d. < /tmp/hashtable.patch)
-	((cd /tmp/XC3-10.4; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory "`pwd`
-	rm -rf /tmp/XC3-10.4
-	
-	test -d /tmp/XC3-10.5 && rm -rf /tmp/XC3-10.5
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3-10.5
-	(cd /tmp/XC3-10.5;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
-	# should we install more than these? (fixed includes?)
-	# Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
-	ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
-	ln -s ../../../i686-apple-darwin10/4.2.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.2.1/libstdc++.dylib
-	# Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
-	ln -s libstdc++.6.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libstdc++.dylib
-	# fix AvailabilityInternal.h (see https://trac.macports.org/wiki/LeopardSDKFixes)
-	sed -i.orig -e 's/define __MAC_OS_X_VERSION_MAX_ALLOWED __MAC_10_6/define __MAC_OS_X_VERSION_MAX_ALLOWED 1058/' /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/AvailabilityInternal.h
-	# Fix tr1/hashtable
-	# see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
-	# in SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1/hashtable
-	# this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
-	(cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1; patch -p0 -d. < /tmp/hashtable.patch)
-	rm /tmp/hashtable.patch
-	
-	test -d /tmp/XC3 && rm -rf /tmp/XC3
-	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.6.pkg /tmp/XC3
-	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.6.sdk)
-	# should we install more than these? (fixed includes?)
-	# Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6" works
-	ln -s libstdc++.6.dylib /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libstdc++.dylib
+        test -d /tmp/XC3-10.4 && rm -rf /tmp/XC3-10.4
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3-10.4
+        (cd /tmp/XC3-10.4;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
+        # should we install more than these? (fixed includes?)
+        # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
+        ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
+        # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
+        ln -s libstdc++.6.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/libstdc++.dylib
+        # Fix tr1/hashtable
+        # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
+        # in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
+        (cd /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1; patch -p0 -d. < /tmp/hashtable.patch)
+        ((cd /tmp/XC3-10.4; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory "`pwd`
+        rm -rf /tmp/XC3-10.4
+        
+        test -d /tmp/XC3-10.5 && rm -rf /tmp/XC3-10.5
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3-10.5
+        (cd /tmp/XC3-10.5;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
+        # should we install more than these? (fixed includes?)
+        # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
+        ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
+        ln -s ../../../i686-apple-darwin10/4.2.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.2.1/libstdc++.dylib
+        # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
+        ln -s libstdc++.6.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libstdc++.dylib
+        # fix AvailabilityInternal.h (see https://trac.macports.org/wiki/LeopardSDKFixes)
+        sed -i.orig -e 's/define __MAC_OS_X_VERSION_MAX_ALLOWED __MAC_10_6/define __MAC_OS_X_VERSION_MAX_ALLOWED 1058/' /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/AvailabilityInternal.h
+        # Fix tr1/hashtable
+        # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
+        # in SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1/hashtable
+        # this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
+        (cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1; patch -p0 -d. < /tmp/hashtable.patch)
+        rm /tmp/hashtable.patch
+        
+        test -d /tmp/XC3 && rm -rf /tmp/XC3
+        pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.6.pkg /tmp/XC3
+        (cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.6.sdk)
+        # should we install more than these? (fixed includes?)
+        # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6" works
+        ln -s libstdc++.6.dylib /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libstdc++.dylib
 
-	# we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
-	# This should fix compiling the following:
-	# int main() { __uint128_t a = 100; __uint128_t b = 200; __uint128_t c = a / b; return 0; }
-	# with clang -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 conftest1.c
-	cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
-	cp /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
+        # we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
+        # This should fix compiling the following:
+        # int main() { __uint128_t a = 100; __uint128_t b = 200; __uint128_t c = a / b; return 0; }
+        # with clang -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 conftest1.c
+        cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
+        cp /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
 
-	((cd /tmp/XC3-10.5; tar cf - SDKs/MacOSX10.5.sdk) |gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory "`pwd`
-	((cd /tmp/XC3; tar cf - SDKs/MacOSX10.6.sdk) |gzip -c > Xcode106SDK.tar.gz) && echo "*** Created Xcode106SDK.tar.gz in directory "`pwd`
+        ((cd /tmp/XC3-10.5; tar cf - SDKs/MacOSX10.5.sdk) |gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory "`pwd`
+        ((cd /tmp/XC3; tar cf - SDKs/MacOSX10.6.sdk) |gzip -c > Xcode106SDK.tar.gz) && echo "*** Created Xcode106SDK.tar.gz in directory "`pwd`
 
-	rm -rf /tmp/XC3-10.5 /tmp/XC3
-	hdiutil detach $MNTDIR/Xcode\ and\ iOS\ SDK
+        rm -rf /tmp/XC3-10.5 /tmp/XC3
+        hdiutil detach $MNTDIR/Xcode\ and\ iOS\ SDK
 
-	hdiutil attach xcode4630916281a.dmg $ATTACH_OPTS
-	if [ ! -d $MNTDIR/Xcode ]; then
-	    echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
-	    echo "Aborting"
-	    rmdir $MNTDIR
-	    exit
-	fi
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "*** Created Xcode107SDK.tar.gz in directory "`pwd`
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "*** Created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
-	hdiutil detach $MNTDIR/Xcode
+        hdiutil attach xcode4630916281a.dmg $ATTACH_OPTS
+        if [ ! -d $MNTDIR/Xcode ]; then
+            echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
+            echo "Aborting"
+            rmdir $MNTDIR
+            exit
+        fi
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "*** Created Xcode107SDK.tar.gz in directory "`pwd`
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "*** Created XcodePluginGCC42-Xcode4.tar.gz in directory "`pwd`
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory "`pwd`
+        hdiutil detach $MNTDIR/Xcode
 
-	hdiutil attach xcode_5.1.1.dmg $ATTACH_OPTS
-	if [ ! -d $MNTDIR/Xcode ]; then
-	    echo "*** Error while trying to attach disk image xcode_5.1.1.dmg"
-	    echo "Aborting"
-	    rmdir $MNTDIR
-	    exit
-	fi
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "*** Created Xcode108SDK.tar.gz in directory "`pwd`
-	hdiutil detach $MNTDIR/Xcode
+        hdiutil attach xcode_5.1.1.dmg $ATTACH_OPTS
+        if [ ! -d $MNTDIR/Xcode ]; then
+            echo "*** Error while trying to attach disk image xcode_5.1.1.dmg"
+            echo "Aborting"
+            rmdir $MNTDIR
+            exit
+        fi
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "*** Created Xcode108SDK.tar.gz in directory "`pwd`
+        hdiutil detach $MNTDIR/Xcode
 
-	hdiutil attach Xcode_6.4.dmg $ATTACH_OPTS
-	if [ ! -d $MNTDIR/Xcode ]; then
-	    echo "*** Error while trying to attach disk image Xcode_6.4.dmg"
-	    echo "Aborting"
-	    rmdir $MNTDIR
-	    exit
-	fi
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.9.sdk) |gzip -c > Xcode109SDK.tar.gz) && echo "*** Created Xcode109SDK.tar.gz in directory "`pwd`
-	((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "*** Created Xcode1010SDK.tar.gz in directory "`pwd`
-	hdiutil detach $MNTDIR/Xcode
-	rmdir $MNTDIR
-	;;
+        hdiutil attach Xcode_6.4.dmg $ATTACH_OPTS
+        if [ ! -d $MNTDIR/Xcode ]; then
+            echo "*** Error while trying to attach disk image Xcode_6.4.dmg"
+            echo "Aborting"
+            rmdir $MNTDIR
+            exit
+        fi
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.9.sdk) |gzip -c > Xcode109SDK.tar.gz) && echo "*** Created Xcode109SDK.tar.gz in directory "`pwd`
+        ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "*** Created Xcode1010SDK.tar.gz in directory "`pwd`
+        hdiutil detach $MNTDIR/Xcode
+        rmdir $MNTDIR
+        ;;
 
     install|installbeta)
         #######################
         # PHASE 2: INSTALLING
         #
         if [ ! -w / ]; then
-	    echo "*** The install phase requires requires administrative rights. Please run it as \"sudo $0 install\""
-	    exit 1
-	fi
-	if [ ! -d "$PLUGINDIR" ]; then
-	    echo "*** Error: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app, cannot install"
-	    exit 1
-	fi
-	if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
-	    echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
-	else
-	    (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC40.tar.gz"
-	fi
-	if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
-	    echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
-	else
-	    (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC42.tar.gz"
-	fi
-	if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
-	    echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
-	else
-	    (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
-	fi
+            echo "*** The install phase requires requires administrative rights. Please run it as \"sudo $0 install\""
+            exit 1
+        fi
+        if [ ! -d "$PLUGINDIR" ]; then
+            echo "*** Error: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app, cannot install"
+            exit 1
+        fi
+        if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
+            echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
+        else
+            (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC40.tar.gz"
+        fi
+        if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
+            echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
+        else
+            (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC42.tar.gz"
+        fi
+        if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
+            echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
+        else
+            (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
+        fi
 
-	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
-	    echo "*** Not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
-	else
-	    (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; tar xf -))
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
-	    echo "*** installed XcodePPCas.tar.gz"
-	fi
-	for v in 4.0 4.2; do
-	    for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
-		if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
-		    ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
-		fi
-	    done
-	done
+        if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
+            echo "*** Not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
+        else
+            (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR"; tar xf -))
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
+            echo "*** installed XcodePPCas.tar.gz"
+        fi
+        for v in 4.0 4.2; do
+            for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
+                if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
+                    ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
+                fi
+            done
+        done
 
-	if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
-	    echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
-	else
-	    mkdir -p "$GCCDIR/tmp"
-	    (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; tar xf -))
-	    cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
-	    cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
-	    rm -rf "$GCCDIR/tmp"
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
-	    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
-	    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
-	    # prevent overwriting the original ld if the script is run twice
-	    if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
-		mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
-	    fi
-	    cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+        if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
+            echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
+        else
+            mkdir -p "$GCCDIR/tmp"
+            (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; tar xf -))
+            cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
+            cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
+            rm -rf "$GCCDIR/tmp"
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
+            mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
+            ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
+            # prevent overwriting the original ld if the script is run twice
+            if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
+                mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+            fi
+            cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
 #!/bin/bash
 
 ARCH=''
 ARCH_FOUND=0
 for var in "\$@"
 do
-	if [ "\$ARCH_FOUND" -eq '1' ]; then
-		ARCH=\$var
-		break
-	elif [ "\$var" = '-arch' ]; then
-		ARCH_FOUND=1
-	fi
+        if [ "\$ARCH_FOUND" -eq '1' ]; then
+                ARCH=\$var
+                break
+        elif [ "\$var" = '-arch' ]; then
+                ARCH_FOUND=1
+        fi
 done
 
 echo "Running ld for \$ARCH ..."
@@ -351,183 +351,191 @@ echo "Running ld for \$ARCH ..."
 LD_DIR=\`dirname "\$0"\`
 LD_RESULT=255
 if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH" = 'ppc64' ]; then
-	ARGS=()
-	DEPINFO_FOUND=0
-	for var in "\$@"; do
-		if [ "\$DEPINFO_FOUND" -eq '1' ]; then
-			DEPINFO_FOUND=0
-			continue
-		elif [ "\$var" = '-dependency_info' ]; then
-			DEPINFO_FOUND=1
-			continue
-		fi
+        ARGS=()
+        DEPINFO_FOUND=0
+        for var in "\$@"; do
+                if [ "\$DEPINFO_FOUND" -eq '1' ]; then
+                        DEPINFO_FOUND=0
+                        continue
+                elif [ "\$var" = '-dependency_info' ]; then
+                        DEPINFO_FOUND=1
+                        continue
+                fi
 
-		ARGS+=("\$var")
-	done
+                ARGS+=("\$var")
+        done
 
-	\`\$LD_DIR/../libexec/ld/\$ARCH/ld "\${ARGS[@]}"\`
-	LD_RESULT=\$?
+        \`\$LD_DIR/../libexec/ld/\$ARCH/ld "\${ARGS[@]}"\`
+        LD_RESULT=\$?
 else
-	\`\$LD_DIR/ld-original "\$@"\`
-	LD_RESULT=\$?
+        \`\$LD_DIR/ld-original "\$@"\`
+        LD_RESULT=\$?
 fi
 
 exit \$LD_RESULT
 LD_EOF
-	    chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-	    echo "*** installed Xcode3ld.tar.gz"
-	fi
+            chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+            echo "*** installed Xcode3ld.tar.gz"
+        fi
 
-	if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
-	    echo "*** Not modifying MacOSX Architectures.xcspec (found original at $SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
-	else
-		mv "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
-		{ awk 'NR>1{print l}{l=$0}' "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
-	{
-		Type = Architecture;
-		Identifier = ppc;
-		Name = "Minimal (32-bit PowerPC only)";
-		Description = "32-bit PowerPC";
-		"PerArchBuildSettingName" = PowerPC;
-		ByteOrder = big;
-		ListInEnum = YES;
-		SortNumber = 201;
-	},
-	{
-		Type = Architecture;
-		Identifier = ppc7400;
-		Name = "PowerPC G4";
-		Description = "32-bit PowerPC for G4 processor";
-		ByteOrder = big;
-		ListInEnum = YES;
-		SortNumber = 202;
-	},
-	{
-		Type = Architecture;
-		Identifier = ppc970;
-		Name = "PowerPC G5 32-bit";
-		Description = "32-bit PowerPC for G5 processor";
-		ByteOrder = big;
-		ListInEnum = YES;
-		SortNumber = 203;
-	},
-	{
-		Type = Architecture;
-		Identifier = ppc64;
-		Name = "PowerPC 64-bit";
-		Description = "64-bit PowerPC";
-		"PerArchBuildSettingName" = "PowerPC 64-bit";
-		ByteOrder = big;
-		ListInEnum = YES;
-		SortNumber = 204;
-	},
+        if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+            echo "*** Not modifying MacOSX Architectures.xcspec (found original at $SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
+        else
+                mv "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
+                { awk 'NR>1{print l}{l=$0}' "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+        {
+                Type = Architecture;
+                Identifier = ppc;
+                Name = "Minimal (32-bit PowerPC only)";
+                Description = "32-bit PowerPC";
+                "PerArchBuildSettingName" = PowerPC;
+                ByteOrder = big;
+                ListInEnum = YES;
+                SortNumber = 201;
+        },
+        {
+                Type = Architecture;
+                Identifier = ppc7400;
+                Name = "PowerPC G4";
+                Description = "32-bit PowerPC for G4 processor";
+                ByteOrder = big;
+                ListInEnum = YES;
+                SortNumber = 202;
+        },
+        {
+                Type = Architecture;
+                Identifier = ppc970;
+                Name = "PowerPC G5 32-bit";
+                Description = "32-bit PowerPC for G5 processor";
+                ByteOrder = big;
+                ListInEnum = YES;
+                SortNumber = 203;
+        },
+        {
+                Type = Architecture;
+                Identifier = ppc64;
+                Name = "PowerPC 64-bit";
+                Description = "64-bit PowerPC";
+                "PerArchBuildSettingName" = "PowerPC 64-bit";
+                ByteOrder = big;
+                ListInEnum = YES;
+                SortNumber = 204;
+        },
 )
 SPEC_EOF
-	    echo "*** modified MacOSX Architectures.xcspec"
-	fi
+            echo "*** modified MacOSX Architectures.xcspec"
+        fi
 
-	if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
-	    echo "*** Not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode104SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode104SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.4u.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.5.sdk" ]; then
-	    echo "*** Not installing Xcode105SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.5.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode105SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode105SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.5.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.6.sdk" ]; then
-	    echo "*** Not installing Xcode106SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.6.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode106SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode106SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.6.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.7.sdk" ]; then
-	    echo "*** Not installing Xcode107SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.7.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode107SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.8.sdk" ]; then
-	    echo "*** Not installing Xcode108SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.8.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode108SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode108SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.8.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.9.sdk" ]; then
-	    echo "*** Not installing Xcode109SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.9.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode109SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode109SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.9.sdk/legacy"
-	fi
-	if [ -d "$SDKDIR/SDKs/MacOSX10.10.sdk" ]; then
-	    echo "*** Not installing Xcode1010SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.10.sdk, uninstall first to force install)"
-	else
-	    (gzip -dc Xcode1010SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode1010SDK.tar.gz"
-	    touch "$SDKDIR/SDKs/MacOSX10.10.sdk/legacy"
-	fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
+            echo "*** Not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode104SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode104SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.4u.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.5.sdk" ]; then
+            echo "*** Not installing Xcode105SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.5.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode105SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode105SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.5.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.6.sdk" ]; then
+            echo "*** Not installing Xcode106SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.6.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode106SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode106SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.6.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.7.sdk" ]; then
+            echo "*** Not installing Xcode107SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.7.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode107SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.8.sdk" ]; then
+            echo "*** Not installing Xcode108SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.8.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode108SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode108SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.8.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.9.sdk" ]; then
+            echo "*** Not installing Xcode109SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.9.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode109SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode109SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.9.sdk/legacy"
+        fi
+        if [ -d "$SDKDIR/SDKs/MacOSX10.10.sdk" ]; then
+            echo "*** Not installing Xcode1010SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.10.sdk, uninstall first to force install)"
+        else
+            (gzip -dc Xcode1010SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode1010SDK.tar.gz"
+            touch "$SDKDIR/SDKs/MacOSX10.10.sdk/legacy"
+        fi
 
-	if [ -f /usr/bin/gcc-4.0 ]; then
-	    #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
-	    echo "*** Not installing Xcode3gcc40.tar.gz (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
-	else
-	    echo "*** Installing GCC 4.0"
-	    #installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
-     	    (gzip -dc Xcode3gcc40.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc40.tar.gz"
-	fi
-	if [ -f /usr/bin/gcc-4.2 ]; then
-	    #echo "*** Not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
-	    echo "*** Not installing Xcode3gcc42.tar.gz (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
-	else
-	    echo "*** Installing GCC 4.2"
-	    #installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
-     	    (gzip -dc Xcode3gcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
-	fi
-	if [ -f /usr/bin/llvm-gcc-4.2 ]; then
-	    #echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
-	    echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
-	else
-	    echo "*** Installing LLVM GCC 4.2"
-	    #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
-     	    (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
-	fi
-	;;
+        if [ -f /usr/bin/gcc-4.0 ]; then
+            #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
+            echo "*** Not installing Xcode3gcc40.tar.gz (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
+        else
+            echo "*** Installing GCC 4.0"
+            #installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
+            (gzip -dc Xcode3gcc40.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc40.tar.gz"
+        fi
+        if [ -f /usr/bin/gcc-4.2 ]; then
+            #echo "*** Not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
+            echo "*** Not installing Xcode3gcc42.tar.gz (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
+        else
+            echo "*** Installing GCC 4.2"
+            #installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
+            (gzip -dc Xcode3gcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
+        fi
+        if [ -f /usr/bin/llvm-gcc-4.2 ]; then
+            #echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+            echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+        else
+            echo "*** Installing LLVM GCC 4.2"
+            #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
+            (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
+        fi
+        ;;
 
     cleanpackages)
         #######################
         # PHASE 3: CLEANING
         #
 
-	rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz Xcode107SDK.tar.gz Xcode108SDK.tar.gz Xcode109SDK.tar.gz Xcode1010SDK.tar.gz XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz
+        rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz Xcode107SDK.tar.gz Xcode108SDK.tar.gz Xcode109SDK.tar.gz Xcode1010SDK.tar.gz XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz
 
-	;;
+        ;;
 
     uninstall|uninstallbeta)
         #######################
         # PHASE 4: UNINSTALLING
         #
         if [ ! -w / ]; then
-	    echo "*** The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
-	    exit 1
-	fi
+            echo "*** The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
+            exit 1
+        fi
 
-	rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
-	rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
-	rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-	mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-	rm -rf "$GCCDIR/usr/bin/"*4.0 "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
-	rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
-	mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
-	for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
-	  [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
-	done
-	;;
+        rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
+        rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
+        rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+        mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+        rm -rf "$GCCDIR/usr/bin/"*4.0 "$GCCDIR/usr/lib/gcc/i686-apple-darwin10" "$GCCDIR/usr/lib/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/powerpc-apple-darwin10" "$GCCDIR/usr/libexec/gcc/i686-apple-darwin10"
+        rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
+        mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+        for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
+          [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        done
+        ;;
 
 esac
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh
