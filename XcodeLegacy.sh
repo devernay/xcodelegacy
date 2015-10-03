@@ -120,9 +120,27 @@ case $1 in
 	((cd /tmp/XC3; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "*** Created XcodePPCas.tar.gz in directory "`pwd`
 	((cd /tmp/XC3; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory "`pwd`
 
-	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
-	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
-	(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
+	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory "`pwd`
+	rm -rf /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.0.pkg /tmp/XC3
+
+	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc40.tar.gz) && echo "*** Created Xcode3gcc40.tar.gz in directory "`pwd`
+
+	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg  xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory "`pwd`
+	rm -rf /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/gcc4.2.pkg /tmp/XC3
+
+	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3gcc42.tar.gz) && echo "*** Created Xcode3gcc42.tar.gz in directory "`pwd`
+
+	#(cp $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory "`pwd`
+	rm -rf /tmp/XC3
+	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/llvm-gcc4.2.pkg /tmp/XC3
+
+	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+	((cd /tmp/XC3; tar cf - usr) |gzip -c > Xcode3llvmgcc42.tar.gz) && echo "*** Created Xcode3llvmgcc42.tar.gz in directory "`pwd`
+
 	rm -rf /tmp/XC3
 
 	cat > /tmp/hashtable.patch <<EOF
@@ -159,6 +177,7 @@ case $1 in
    for ( ; p ; p = p->m_next)
      if (this->compare (k, code, p))
 EOF
+	test -d /tmp/XC3-10.4 && rm -rf /tmp/XC3-10.4
 	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.4.Universal.pkg /tmp/XC3-10.4
 	(cd /tmp/XC3-10.4;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
 	# should we install more than these? (fixed includes?)
@@ -173,6 +192,7 @@ EOF
 	((cd /tmp/XC3-10.4; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory "`pwd`
 	rm -rf /tmp/XC3-10.4
 	
+	test -d /tmp/XC3-10.5 && rm -rf /tmp/XC3-10.5
 	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.5.pkg /tmp/XC3-10.5
 	(cd /tmp/XC3-10.5;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
 	# should we install more than these? (fixed includes?)
@@ -190,6 +210,7 @@ EOF
 	(cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1; patch -p0 -d. < /tmp/hashtable.patch)
 	rm /tmp/hashtable.patch
 	
+	test -d /tmp/XC3 && rm -rf /tmp/XC3
 	pkgutil --expand $MNTDIR/Xcode\ and\ iOS\ SDK/Packages/MacOSX10.6.pkg /tmp/XC3
 	(cd /tmp/XC3;gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.6.sdk)
 	# should we install more than these? (fixed includes?)
@@ -449,22 +470,28 @@ SPEC_EOF
 	fi
 
 	if [ -f /usr/bin/gcc-4.0 ]; then
-	    echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
+	    #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
+	    echo "*** Not installing Xcode3gcc40.tar.gz (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
 	else
 	    echo "*** Installing GCC 4.0"
-	    installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
+	    #installer -pkg xcode_3.2.6_gcc4.0.pkg -target /
+     	    (gzip -dc Xcode3gcc40.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc40.tar.gz"
 	fi
 	if [ -f /usr/bin/gcc-4.2 ]; then
-	    echo "*** Not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
+	    #echo "*** Not installing xcode_3.2.6_gcc4.2.pkg (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
+	    echo "*** Not installing Xcode3gcc42.tar.gz (found installed in /usr/bin/gcc-4.2, uninstall first to force install)"
 	else
 	    echo "*** Installing GCC 4.2"
-	    installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
+	    #installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
+     	    (gzip -dc Xcode3gcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
 	fi
 	if [ -f /usr/bin/llvm-gcc-4.2 ]; then
-	    echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+	    #echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
+	    echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
 	else
 	    echo "*** Installing LLVM GCC 4.2"
-	    installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
+	    #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
+     	    (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
 	fi
 	;;
 
