@@ -524,20 +524,28 @@ SPEC_EOF
             (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$GCCINSTALLDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
         fi
         
-        echo "*** Creating symbolic links to compilers in $GCCLINKDIR:"
-        echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
-        for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/$b $GCCLINKDIR/bin/$b; done
-        
-        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/i686-apple-darwin10-$b $GCCLINKDIR/bin/i686-apple-darwin10-$b; done
-        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/powerpc-apple-darwin10-$b $GCCLINKDIR/bin/powerpc-apple-darwin10-$b; done
-
-        echo "*** Create symbolic links to compliers in $GCCDIR:"
-        echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
-        for v in 4.0 4.2; do
+        echo "*** Create symbolic links to compliers in $GCCDIR and $GCCLINKDIR:"
+        if [ ! -d "$GCCDIR"/usr/bin ]; then
+            mkdir -p "$GCCDIR"/usr/bin
+        fi
+        if [ ! -d "$GCCLINKDIR"/bin ]; then
+            mkdir -p "$GCCLINKDIR"/bin
+        fi
+        for v in 4.0 4.2 4.0.1 4.2.1; do
             for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
-                if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
-                    ln -sf "$GCCLINKDIR"/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
-                fi
+                for p in i686-apple-darwin10- powerpc-apple-darwin10- ""; do
+                    if [ -f "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} ]; then
+                        echo "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} exists
+                        if [ ! -f "$GCCLINKDIR"/bin/${p}${i}-${v} ]; then
+                            echo "* creating link $GCCLINKDIR/bin/${p}${i}-${v}"
+                            ln -sf "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} "$GCCLINKDIR"/bin/${p}${i}-${v}
+                        fi
+                        if [ ! -f "$GCCDIR"/usr/bin/${p}${i}-${v} ]; then
+                            echo "* creating link $GCCDIR/usr/bin/${i}-${v}"
+                            ln -sf "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} "$GCCDIR"/usr/bin/${p}${i}-${v}
+                        fi
+                    fi
+                done
             done
         done
         ;;
