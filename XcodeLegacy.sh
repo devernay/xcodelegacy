@@ -281,7 +281,7 @@ EOF
         # PHASE 2: INSTALLING
         #
         if [ ! -w / ]; then
-            echo "*** The install phase requires requires administrative rights. Please run it as \"sudo $0 install\""
+            echo "*** The install phase requires administrative rights. Please run it as \"sudo $0 install\""
             exit 1
         fi
         if [ ! -d "$PLUGINDIR" ]; then
@@ -314,13 +314,6 @@ EOF
             ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
             echo "*** installed XcodePPCas.tar.gz"
         fi
-        for v in 4.0 4.2; do
-            for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
-                if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
-                    ln -sf /usr/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
-                fi
-            done
-        done
 
         if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
             echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
@@ -530,11 +523,23 @@ SPEC_EOF
             #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
             (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$GCCINSTALLDIR"; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
         fi
-        if [ ! -f $GCCLINKDIR/bin/llvm-gcc-4.2 ]; then
-            echo "*** Creating symbolic links to compilers in $GCCLINKDIR:"
-            echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
-            for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/$b $GCCLINKDIR/bin/$b; done
-        fi
+        
+        echo "*** Creating symbolic links to compilers in $GCCLINKDIR:"
+        echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
+        for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/$b $GCCLINKDIR/bin/$b; done
+        
+        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/i686-apple-darwin10-$b $GCCLINKDIR/bin/i686-apple-darwin10-$b; done
+        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do ln -s $GCCINSTALLDIR/usr/bin/powerpc-apple-darwin10-$b $GCCLINKDIR/bin/powerpc-apple-darwin10-$b; done
+
+        echo "*** Create symbolic links to compliers in $GCCDIR:"
+        echo "*** gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2"
+        for v in 4.0 4.2; do
+            for i in c++ cpp g++ gcc gcov llvm-cpp llvm-g++ llvm-gcc; do
+                if [ ! -f "$GCCDIR"/usr/bin/${i}-${v} ]; then
+                    ln -sf "$GCCLINKDIR"/bin/${i}-${v} "$GCCDIR"/usr/bin/${i}-${v}
+                fi
+            done
+        done
         ;;
 
     cleanpackages)
@@ -574,6 +579,16 @@ SPEC_EOF
         for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do
             if [ -L $GCCLINKDIR/bin/$b ]; then
                 rm $GCCLINKDIR/bin/$b
+            fi
+        done
+        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do 
+            if [ -L $GCCLINKDIR/bin/i686-apple-darwin10-$b ]; then
+                rm $GCCLINKDIR/bin/i686-apple-darwin10-$b
+            fi
+        done
+        for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do
+            if [ -L $GCCLINKDIR/usr/bin/powerpc-apple-darwin10-$b ]; then
+                rm $GCCLINKDIR/usr/bin/powerpc-apple-darwin10-$b
             fi
         done
 
