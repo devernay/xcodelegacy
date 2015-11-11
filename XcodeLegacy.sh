@@ -12,6 +12,7 @@
 # 1.3 (07/10/2014): Xcode 6 removed 10.8 SDK, grab it from Xcode 5.1.1
 # 1.4 (21/08/2015): Xcode 7 removed 10.9 and 10.10 SDKs, grab them from Xcode 6.4
 # 1.5 (15/10/2015): Fixes for OS X 10.11 El Capitan (nothing can be installed in /usr/bin because of the sandbox)
+# 1.6 (11/11/2015): Fix buildpackages, fix /usr/bin/gcc on recent OS X, fix download messages
 
 
 if [ $# != 1 ]; then
@@ -74,34 +75,34 @@ case $1 in
         # PHASE 1: PACKAGING
         #
         if [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
-            echo "*** you should download Xcode 3.2.6 from:"
-            echo " http://connect.apple.com/cgi-bin/WebObjects/MemberSite.woa/wa/getSoftware?bundleID=20792"
-            echo "or"
+            echo "*** you should download Xcode 3.2.6. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
             echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
         fi
         if [ ! -f xcode4630916281a.dmg ]; then
-            echo "*** you should download Xcode 4.6.3 from:"
-            echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "or"
+            echo "*** you should download Xcode 4.6.3. Login to:"
             echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
         fi
         if [ ! -f xcode_5.1.1.dmg ]; then
-            echo "*** you should download Xcode 5.1.1 from:"
-            echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
-            echo "or"
+            echo "*** you should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
         fi
         if [ ! -f Xcode_6.4.dmg ]; then
-            echo "*** you should download Xcode 6.4 from:"
-            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
-            echo "or"
+            echo "*** you should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
         fi
@@ -156,8 +157,8 @@ case $1 in
         rm -rf /tmp/XC3
 
         cat > /tmp/hashtable.patch <<EOF
---- hashtable.orig      2015-09-01 14:43:32.000000000 +0200
-+++ hashtable   2010-09-03 22:41:42.000000000 +0200
+--- hashtable.orig	2015-09-01 14:43:32.000000000 +0200
++++ hashtable	2010-09-03 22:41:42.000000000 +0200
 @@ -860,7 +860,7 @@
    typedef typename Internal::IF<unique_keys, std::pair<iterator, bool>, iterator>::type
            Insert_Return_Type;
@@ -171,16 +172,16 @@ case $1 in
        node* n = ht.m_buckets[i];
        node** tail = m_buckets + i;
        while (n) {
--       *tail = m_allocate_node (n);
--       (*tail).copy_code_from (n);
-+       //      *tail = m_allocate_node (n);
-+       //      (*tail).copy_code_from (n);
-+       *tail = m_allocate_node (n->m_v);
-        tail = &((*tail)->m_next);
-        n = n->m_next;
+-	*tail = m_allocate_node (n);
+-	(*tail).copy_code_from (n);
++	// 	*tail = m_allocate_node (n);
++	// 	(*tail).copy_code_from (n);
++	*tail = m_allocate_node (n->m_v);
+ 	tail = &((*tail)->m_next);
+ 	n = n->m_next;
        }
 @@ -1216,7 +1217,7 @@
-          bool c, bool m, bool u>
+ 	  bool c, bool m, bool u>
  typename hashtable<K,V,A,Ex,Eq,H1,H2,H,RP,c,m,u>::node* 
  hashtable<K,V,A,Ex,Eq,H1,H2,H,RP,c,m,u>
 -::find_node (node* p, const key_type& k, typename hashtable::hash_code_t code)
@@ -549,6 +550,13 @@ SPEC_EOF
                 done
             done
         done
+        # fix /usr/bin/gcc, see https://github.com/devernay/xcodelegacy/issues/19
+        if [ -x /usr/bin/gcc -a ! -x "$GCCINSTALLDIR/usr/bin/gcc" -a -x "$GCCINSTALLDIR/usr/bin/clang" ]; then
+            ln -s clang "$GCCINSTALLDIR/usr/bin/gcc"
+            # run gcc once so that xcode-select finds the right dir
+            gcc 1>/dev/null 2>/dev/null
+            rm "$GCCINSTALLDIR/usr/bin/gcc"
+        fi
         ;;
 
     cleanpackages)
