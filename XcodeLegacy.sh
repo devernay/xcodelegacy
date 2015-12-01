@@ -355,14 +355,14 @@ done
 echo "Running ld for \$ARCH ..."
 
 LD_DIR=\`dirname "\$0"\`
-if [ -f "\$LD_DIR/ld-original" ]; then
+if [ -x "\$LD_DIR/ld-original" ]; then
         LDORIGINAL="\$LD_DIR/ld-original"
-elif [ -f "\$LD_DIR/../../../../bin/ld-original" ]; then
+elif [ -x "\$LD_DIR/../../../../bin/ld-original" ]; then
         LDORIGINAL="\$LD_DIR/../../../../bin/ld-original"
-elif [ -f "\$LD_DIR/../../../../../bin/ld-original" ]; then
+elif [ -x "\$LD_DIR/../../../../../bin/ld-original" ]; then
         LDORIGINAL="\$LD_DIR/../../../../../bin/ld-original"
 else
-        echo "Error: cannot find ld-original in \$LD_DIR or \$LD_DIR/../../../../bin"
+        echo "Error: cannot find ld-original in \$LD_DIR \$LD_DIR/../../../../bin or \$LD_DIR/../../../../../bin"
         exit 1
 fi
 LD_RESULT=255
@@ -380,14 +380,16 @@ if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH"
 
                 ARGS+=("\$var")
         done
-        if [ -f "\$LD_DIR/../libexec/ld/\$ARCH/ld" ]; then
+        if [ -x "\$LD_DIR/../libexec/ld/\$ARCH/ld" ]; then
                 LD="\$LD_DIR/../libexec/ld/\$ARCH/ld"
-        elif [ -f "\$LD_DIR/../../../libexec/ld/\$ARCH/ld" ]; then
+        elif [ -x "\$LD_DIR/../../../libexec/ld/\$ARCH/ld" ]; then
                 LD="\$LD_DIR/../../../libexec/ld/\$ARCH/ld"
-        elif [ -f "\$LD_DIR/../../../../libexec/ld/\$ARCH/ld" ]; then
+        elif [ -x "\$LD_DIR/../../../../libexec/ld/\$ARCH/ld" ]; then
                 LD="\$LD_DIR/../../../../libexec/ld/\$ARCH/ld"
+        elif [ -x "\$LD_DIR/../../../../../libexec/ld/\$ARCH/ld" ]; then
+                LD="\$LD_DIR/../../../../../libexec/ld/\$ARCH/ld"
         else
-                echo "Error: cannot find ld for \$ARCH in \$LD_DIR/../libexec/ld/\$ARCH \$LD_DIR/../../../libexec/ld/\$ARCH or \$LD_DIR/../../../../libexec/ld/\$ARCH"
+                echo "Error: cannot find ld for \$ARCH in \$LD_DIR/../libexec/ld/\$ARCH \$LD_DIR/../../../libexec/ld/\$ARCH \$LD_DIR/../../../../libexec/ld/\$ARCH or \$LD_DIR/../../../../../libexec/ld/\$ARCH"
                 exit 1
         fi
         
