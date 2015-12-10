@@ -554,10 +554,14 @@ SPEC_EOF
         done
         # fix /usr/bin/gcc, see https://github.com/devernay/xcodelegacy/issues/19
         if [ -x /usr/bin/gcc -a ! -x "$GCCINSTALLDIR/usr/bin/gcc" -a -x "$GCCINSTALLDIR/usr/bin/clang" ]; then
+            # "xcode-select -r" sets /usr/bin/gcc to be the first gcc found in $GCCINSTALLDIR, which happens to be
+            # the directory $GCCINSTALLDIR/usr/libexec/gcc, and results in the following error:
+            # $ gcc
+            # gcc: error: can't exec '/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/libexec/gcc' (errno=Permission denied)
+            # by putting a link to clang (which is the default Xcode behavior), we fix this
             ln -s clang "$GCCINSTALLDIR/usr/bin/gcc"
-            # run gcc once so that xcode-select finds the right dir
+            # run gcc once so that xcode-select finds the right file for gcc
             gcc 1>/dev/null 2>/dev/null
-            rm "$GCCINSTALLDIR/usr/bin/gcc"
         fi
         ;;
 
