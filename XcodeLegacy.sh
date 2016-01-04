@@ -570,7 +570,7 @@ SPEC_EOF
         # PHASE 3: CLEANING
         #
 
-        rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz Xcode107SDK.tar.gz Xcode108SDK.tar.gz Xcode109SDK.tar.gz Xcode1010SDK.tar.gz XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz
+        rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg Xcode104SDK.tar.gz Xcode105SDK.tar.gz Xcode106SDK.tar.gz Xcode107SDK.tar.gz Xcode108SDK.tar.gz Xcode109SDK.tar.gz Xcode1010SDK.tar.gz XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz Xcode3gcc40.tar.gz Xcode3gcc42.tar.gz Xcode3llvmgcc42.tar.gz 2>/dev/null
 
         ;;
 
