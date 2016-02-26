@@ -10,7 +10,7 @@ Description
 
 Many components were removed in recent versions of Xcode, the most notable being the Mac OS X 10.6 SDK, which is required to build software using the Carbon API (such as wxWidgets 2.8).
 
-I made the script XcodeLegacy.sh to extract these components (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first) from [Xcode 3.2.6](http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg), [Xcode 4.6.3](http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg), [Xcode 5.1.1](http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) , [Xcode 6.4](http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) and install them in Xcode 4/5/6/7:
+I made the script XcodeLegacy.sh to extract these components (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first) from [Xcode 3.2.6](http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) (10.4, 10.5 and 10.6 SDKs, PPC assembler, GCC 4.0 and 4.2, LLVM-GCC 4.2), [Xcode 4.6.3](http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) (10.7 SDK), [Xcode 5.1.1](http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) (10.8 SDK), [Xcode 6.4](http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) (10.9 and 10.10 SDKs) and install them in Xcode 4/5/6/7:
 
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 compilers
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
@@ -54,6 +54,18 @@ Links to the compilers are installed in `/usr/bin` (or `/usr/local/bin` on OS X 
 GCC 4.0, GCC 4.2 and LLVM GCC 4.2 cannot compile for OS X 10.10 or newer.
 
 PowerPC architectures (ppc, ppc7400, ppc970, ppc64) cannot be linked for OS X 10.7 or newer.
+
+Note on Xcode versions
+----------------------
+
+Here are the latest versions of Xcode that are known to /run/ on each OS X version (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first):
+
+- [Xcode 3.1.4](http://adcdownload.apple.com/Developer_Tools/xcode_3.1.4_developer_tools/xcode314_2809_developerdvd.dmg) on Mac OS X 10.5 (Leopard)
+- [Xcode 3.2.6](http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) on Mac OS X 10.6 (Snow Leopard) - [Xcode 4.0.2](http://adcdownload.apple.com/Developer_Tools/xcode_4.0.2_and_ios_sdk_4.3/xcode_4.0.2_and_ios_sdk_4.3.dmg) also runs on Snow Leopard, but is only available to pay members 
+- [Xcode 4.6.3](http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) on OS X 10.7 (Lion)
+- [Xcode 5.1.1](http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) on OS X 10.8 (Mountain Lion)
+- [Xcode 6.2](http://adcdownload.apple.com/Developer_Tools/Xcode_6.2/Xcode_6.2.dmg) on OS X 10.9 (Mavericks)
+- [Xcode 7.2.1](http://adcdownload.apple.com/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite) and OS X 10.11 (El Capitan)
 
 License
 -------
