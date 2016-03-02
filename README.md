@@ -67,6 +67,8 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 6.2](http://adcdownload.apple.com/Developer_Tools/Xcode_6.2/Xcode_6.2.dmg) on OS X 10.9 (Mavericks)
 - [Xcode 7.2.1](http://adcdownload.apple.com/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite) and OS X 10.11 (El Capitan)
 
+More information about the compilers included in each version of Xcode can be found on the [MacPorts Wiki](https://trac.macports.org/wiki/XcodeVersionInfo).
+
 License
 -------
 This script is distributed under the [Creative Commons BY-NC-SA 3.0 license](http://creativecommons.org/licenses/by-nc-sa/3.0/).
