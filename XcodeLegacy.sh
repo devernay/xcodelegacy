@@ -13,6 +13,7 @@
 # 1.4 (21/08/2015): Xcode 7 removed 10.9 and 10.10 SDKs, grab them from Xcode 6.4
 # 1.5 (15/10/2015): Fixes for OS X 10.11 El Capitan (nothing can be installed in /usr/bin because of the sandbox)
 # 1.6 (11/11/2015): Fix buildpackages, fix /usr/bin/gcc on recent OS X, fix download messages
+# 1.7 (05/04/2016): Xcode 7.3 disables support for older SDKs, fix that
 
 
 if [ $# != 1 ]; then
@@ -45,7 +46,7 @@ else
     fi
     echo "*** Info: found Xcode >= 4.3"
     GCCDIR="/Applications/Xcode.app/Contents/Developer"
-    SDKDIR="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer"
+    SDKDIR="$GCCDIR/Platforms/MacOSX.platform/Developer"
 fi
 
 if [ "$1" = "installbeta" -o "$1" = "uninstallbeta" ]; then
@@ -55,7 +56,7 @@ if [ "$1" = "installbeta" -o "$1" = "uninstallbeta" ]; then
     fi
     echo "*** Info: found Xcode beta"
     GCCDIR="/Applications/Xcode-beta.app/Contents/Developer"
-    SDKDIR="/Applications/Xcode-beta.app/Contents/Developer/Platforms/MacOSX.platform/Developer"
+    SDKDIR="$GCCDIR/Platforms/MacOSX.platform/Developer"
 fi
 SANDBOX=0
 GCCINSTALLDIR="$GCCDIR/Toolchains/XcodeDefault.xctoolchain"
@@ -293,17 +294,17 @@ EOF
         if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
             echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
         else
-            (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC40.tar.gz"
+            (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && touch "$PLUGINDIR/GCC 4.0.xcplugin/legacy" && echo "*** installed XcodePluginGCC40.tar.gz"
         fi
         if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
             echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
         else
-            (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginGCC42.tar.gz"
+            (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && touch "$PLUGINDIR/GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginGCC42.tar.gz"
         fi
         if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
             echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
         else
-            (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
+            (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR"; tar xf -)) && touch "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
         fi
 
         if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
@@ -454,6 +455,16 @@ SPEC_EOF
             echo "*** modified MacOSX Architectures.xcspec"
         fi
 
+        # Xcode >= 7.3 disables support for older SDKs in /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Info.plist
+        # see https://github.com/devernay/xcodelegacy/issues/23
+        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ]; then
+            echo "*** Not modifying MacOSX Info.plist (found original at $GCCDIR/Platforms/MacOSX.platform/Info.plist-original, uninstall first to force install)"
+        elif [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist" ]; then
+            mv "$GCCDIR/Platforms/MacOSX.platform/Info.plist" "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original"
+            sed -e '/MinimumSDKVersion/{N;d;}' < "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" > "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+            echo "*** modified MacOSX Info.plist"
+        fi
+
         if [ -d "$SDKDIR/SDKs/MacOSX10.4u.sdk" ]; then
             echo "*** Not installing Xcode104SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.4u.sdk, uninstall first to force install)"
         else
@@ -583,7 +594,15 @@ SPEC_EOF
             exit 1
         fi
 
-        rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
+        if [ -f "$PLUGINDIR/GCC 4.0.xcplugin/legacy" ]; then
+            rm -rf "$PLUGINDIR/GCC 4.0.xcplugin"
+        fi
+        if [ -f "$PLUGINDIR/GCC 4.2.xcplugin/legacy" ]; then
+            rm -rf "$PLUGINDIR/GCC 4.2.xcplugin"
+        fi
+        if [ -f "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" ]; then
+            rm -rf "$PLUGINDIR/LLVM GCC 4.2.xcplugin"
+        fi
         rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
@@ -591,11 +610,21 @@ SPEC_EOF
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
         rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-        mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+        if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
+            rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+            mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+        fi
         (cd "$GCCDIR"; rm -rf $GCCFILES)
         (cd "$GCCINSTALLDIR"; rm -rf $GCCFILES)
         rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
-        mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+        if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+            rm "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+            mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+        fi
+        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ]; then
+            rm "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+            mv -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+        fi
         for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
           [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         done

@@ -2,3 +2,6 @@
 *.dmg.part
 *.pkg
 *.tar.gz
+
+build
+dgph
