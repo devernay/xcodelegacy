@@ -75,10 +75,13 @@ case $1 in
         #######################
         # PHASE 1: PACKAGING
         #
+        # note: Xcode links from http://stackoverflow.com/questions/10335747/how-to-download-xcode-4-5-6-7-and-get-the-dmg-file/10335943#10335943
         if [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
             echo "*** you should download Xcode 3.2.6. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
+            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
+            echo "or"
             echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
@@ -87,6 +90,8 @@ case $1 in
             echo "*** you should download Xcode 4.6.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
+            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+            echo "or"
             echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
@@ -95,6 +100,8 @@ case $1 in
             echo "*** you should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
+            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo "or"
             echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
@@ -103,6 +110,8 @@ case $1 in
             echo "*** you should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
+            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo "or"
             echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
