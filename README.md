@@ -1,4 +1,4 @@
-XcodeLegacy [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/devernay/xcodelegacy/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+XcodeLegacy
 ===========
 
 Legacy components for XCode 4/5/6/7 (deprecated compilers and Mac OS X SDKs).
@@ -73,6 +73,7 @@ GCC 4.0, GCC 4.2 and LLVM GCC 4.2 cannot compile for OS X 10.10 or newer.
 
 PowerPC architectures (ppc, ppc7400, ppc970, ppc64) cannot be linked for OS X 10.7 or newer (they would be useless anyway, since PowerPC CPUs were only supported up to 10.5).
 
+
 Note on Xcode versions
 ----------------------
 
@@ -83,9 +84,19 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 4.6.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) on OS X 10.7 (Lion)
 - [Xcode 5.1.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) on OS X 10.8 (Mountain Lion)
 - [Xcode 6.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.2/Xcode_6.2.dmg) on OS X 10.9 (Mavericks)
-- [Xcode 7.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite) and OS X 10.11 (El Capitan)
+- [Xcode 7.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite)
+- [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) on OS X 10.11 (El Capitan), please see note below.
 
 More information about the compilers included in each version of Xcode can be found on the [MacPorts Wiki](https://trac.macports.org/wiki/XcodeVersionInfo).
+
+### Linking on Xcode 7.3 and later
+
+The following error may appear when linking a program using the older compilers from Xcode (command-line and Makefile-based builds should not be affected):
+```
+Running ld for ppc ...
+ld: unknown option: -no_deduplicate
+```
+The reason is that the newer versions of the linker introduced the option `-no_deduplicate`, which Xcode adds by default. To disable this, add a User-Defined build setting in Xcode named `LD_DONT_RUN_DEDUPLICATION` and set its value to `NO`.
 
 License
 -------
