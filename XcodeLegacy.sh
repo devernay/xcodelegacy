@@ -15,6 +15,7 @@
 # 1.6 (11/11/2015): Fix buildpackages, fix /usr/bin/gcc on recent OS X, fix download messages
 # 1.7 (05/04/2016): Xcode 7.3 disables support for older SDKs, fix that
 # 1.8 (07/04/2016): add options to install only some SDKs or compilers only
+# 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
 
 compilers=0
 osx104=0
@@ -57,6 +58,10 @@ case $1 in
         osx1010=1
         shift
         ;;
+    -osx1011)
+        osx1011=1
+        shift
+        ;;
     *)
         compilers=1
         osx104=1
@@ -66,17 +71,18 @@ case $1 in
         osx108=1
         osx109=1
         osx1010=1
+        osx1011=1
         ;;
 esac
 
 if [ $# != 1 ]; then
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
-    echo "Description: Extracts / installs / cleans / uninstalls the following components from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1 and Xcode 6.4,"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Description: Extracts / installs / cleans / uninstalls the following components from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1,"
     echo "which are not available in Xcode >= 4.2:"
     echo "- GCC 4.0 Xcode plugin"
     echo "- PPC assembler and linker"
     echo "- GCC 4.0 and 4.2"
-    echo "- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10"
+    echo "- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default everything is done):"
     echo " -compilers : only install the gcc and llvm-gcc compilers, as well as the corresponding Xcode plugins"
@@ -87,6 +93,7 @@ if [ $# != 1 ]; then
     echo " -osx108    : only install OSX 10.8 SDK"
     echo " -osx109    : only install OSX 10.9 SDK"
     echo " -osx1010   : only install OSX 10.10 SDK"
+    echo " -osx1011   : only install OSX 10.11 SDK"
     echo "Note that these cannot be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one should execute:"
     echo "$ $0 -osx109 buildpackages"
@@ -144,6 +151,7 @@ xc3=`expr $compilers + $osx104 + $osx105 + $osx106 != 0`
 xc4=`expr $compilers + $osx107 != 0`
 xc5=`expr $osx108 != 0`
 xc6=`expr $osx109 + $osx1010 != 0`
+xc7=`expr $osx1011 != 0`
 
 case $1 in
     buildpackages)
@@ -189,6 +197,16 @@ case $1 in
             echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "or"
             echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo "and then run this script from within the same directory as the downloaded file"
+            missingdmg=1
+        fi
+        if [ $xc7 = 1 -a ! -f Xcode_7.3.1.dmg ]; then
+            echo "*** you should download Xcode 7.3.1. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
+            echo "or"
+            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -396,6 +414,19 @@ EOF
             fi
             if [ $osx1010 = 1 ]; then
                 ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "*** Created Xcode1010SDK.tar.gz in directory "`pwd`
+            fi
+            hdiutil detach $MNTDIR/Xcode
+        fi
+        if [ $xc7 = 1 ]; then
+            hdiutil attach Xcode_7.3.1.dmg $ATTACH_OPTS
+            if [ ! -d $MNTDIR/Xcode ]; then
+                echo "*** Error while trying to attach disk image Xcode_7.3.1.dmg"
+                echo "Aborting"
+                rmdir $MNTDIR
+                exit
+            fi
+            if [ $osx1011 = 1 ]; then
+                ((cd $MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer; tar cf - SDKs/MacOSX10.11.sdk) |gzip -c > Xcode1011SDK.tar.gz) && echo "*** Created Xcode1011SDK.tar.gz in directory "`pwd`
             fi
             hdiutil detach $MNTDIR/Xcode
         fi
