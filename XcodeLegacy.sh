@@ -25,6 +25,7 @@ osx107=0
 osx108=0
 osx109=0
 osx1010=0
+osx1011=0
 case $1 in
     -compilers)
         compilers=1
@@ -674,6 +675,15 @@ SPEC_EOF
             fi
         fi
 
+        if [ $osx1011 = 1 ]; then
+            if [ -d "$SDKDIR/SDKs/MacOSX10.11.sdk" ]; then
+                echo "*** Not installing Xcode1011SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.11.sdk, uninstall first to force install)"
+            else
+                (gzip -dc Xcode1011SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode1011SDK.tar.gz"
+                touch "$SDKDIR/SDKs/MacOSX10.11.sdk/legacy"
+            fi
+        fi
+
         if [ $compilers = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -784,6 +794,9 @@ SPEC_EOF
         if [ $osx1010 = 1 ]; then
             rm Xcode1010SDK.tar.gz 2>/dev/null
         fi
+        if [ $osx1011 = 1 ]; then
+            rm Xcode1011SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -852,6 +865,10 @@ SPEC_EOF
         fi
         if [ $osx1010 = 1 ]; then
             i=10.10
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+        if [ $osx1011 = 1 ]; then
+            i=10.11
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
