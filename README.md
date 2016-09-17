@@ -3,7 +3,7 @@ XcodeLegacy
 
 Legacy components for XCode 4-8 (deprecated compilers and Mac OS X SDKs).
 
-Home page: http://devernay.free.fr/hacks/xcodelegacy
+Home page: https://github.com/devernay/xcodelegacy
 
 Description
 -----------
@@ -17,13 +17,11 @@ I made the script XcodeLegacy.sh to extract these components (the links work if 
 - PPC assembler
 - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11
 
-In order to re-enable the GCC 4.2 plugin in Xcode 4-7, you may also want to edit "/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" and change ShowInCompilerSelectionPopup to "YES" and IsNoLongerSupported to "NO".
-
 Note: There may be similar tips to compile for older iOS (not Mac OS X) versions, but I don't develop for iOS. However, if you want to enhace the XcodeLegacy script to also include those components, I'll gladly integrate your modifications.
 
 Download
 --------
-[XcodeLegacy.sh](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh), [1.2](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.2.sh),  [1.3](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.3.sh), [1.4](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.4.sh),  [1.5](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.5.sh), [1.6](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.6.sh),  [1.7](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.7.sh), [1.8](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.8.sh))
+[XcodeLegacy.sh](https://raw.githubusercontent.com/devernay/xcodelegacy/master/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh), [1.2](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.2.sh),  [1.3](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.3.sh), [1.4](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.4/XcodeLegacy.sh),  [1.5](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.5/XcodeLegacy.sh), [1.6](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.6/XcodeLegacy.sh),  [1.7](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.7/XcodeLegacy.sh), [1.8](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.8/XcodeLegacy.sh), [1.9](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.9/XcodeLegacy.sh))
 
 [GitHub repository](https://github.com/devernay/xcodelegacy)
 
@@ -49,6 +47,7 @@ Optionally, one of the following options can be passed as the *first* argument t
 * `-osx108` : only install OSX 10.8 SDK
 * `-osx109` : only install OSX 10.9 SDK
 * `-osx1010` : only install OSX 10.10 SDK
+* `-osx1011` : only install OSX 10.11 SDK
 
 
 Using the older SDKs
@@ -86,6 +85,7 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 6.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.2/Xcode_6.2.dmg) on OS X 10.9 (Mavericks)
 - [Xcode 7.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite)
 - [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) on OS X 10.11 (El Capitan), please see note below.
+- [Xcode 8](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8/Xcode_8.xip) on OS X 10.12 (Sierra), please see note below.
 
 More information about the compilers included in each version of Xcode can be found on the [MacPorts Wiki](https://trac.macports.org/wiki/XcodeVersionInfo).
 
