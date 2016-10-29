@@ -98,6 +98,37 @@ ld: unknown option: -no_deduplicate
 ```
 The reason is that the newer versions of the linker introduced the option `-no_deduplicate`, which Xcode adds by default. To disable this, add a User-Defined build setting in Xcode named `LD_DONT_RUN_DEDUPLICATION` and set its value to `NO`.
 
+Known bugs (and fixes) in OS X SDKs
+-----------------------------------
+
+### Recent GCC versions cannot build universal binaries
+
+The GCC in Apple SDK is actually a small binary that lauches several compilers and merges the results (see [driverdriver.c](http://opensource.apple.com/source/gcc/gcc-5666.3/driverdriver.c)). The same executable can be compiled for recent GCC versions too, see [devernay/macportsGCCfixup](https://github.com/devernay/macportsGCCfixup) on github.
+
+### bad_typeid dyld Error on Leopard (10.5)
+
+This is a bug in the 10.6 (and later) SDKs, which can be easily fixed:
+
+- http://lists.apple.com/archives/xcode-users/2010/May/msg00183.html
+- http://stackoverflow.com/questions/12980931/how-to-ignore-out-of-line-definition-error-in-xcode-with-llvm-4-1
+
+### code compiled with g++ > 4.2.1 crashes with "pointer being freed not allocated"
+
+The problem comes from the fact that some system frameworks load the system libstdc++, which results in incompatible data structures.
+
+After exploring various options (install_name_tool, rpath, etc.), the only solution is to set the environment variable `DYLD_LIBRARY_PATH` to the path of a directory where you *only* put a symbolic link to the newest libstdc++ from GCC (libstdc++ is guaranteed to be backward-compatible, not other libraries).
+
+If you are building an application bundle, you should replace your executable by a small executable that sets the environment variable `DYLD_LIBRARY_PATH`. It can be a script (see below), or a binary (better, because it handles spaces in arguments correctly).
+
+The [`setdyld_lib_path.c`](setdyld_lib_path.c) source code can be compiled to act as a "launcher" for your binary that correctly sets the `DYLD_LIBRARY_PATH` variable. See the full instructions at the top of the source file.
+
+An alternate solution, using a shell-script (doesn't handle spaces in arguments): http://devblog.rarebyte.com/?p=157
+
+Other references:
+
+- http://stackoverflow.com/questions/6365772/unable-to-run-an-application-compiled-on-os-x-snow-leopard-10-6-7-on-another-m
+- http://stackoverflow.com/questions/4697859/mac-os-x-and-static-boost-libs-stdstring-fail
+
 License
 -------
 This script is distributed under the [Creative Commons BY-NC-SA 3.0 license](http://creativecommons.org/licenses/by-nc-sa/3.0/).
