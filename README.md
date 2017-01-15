@@ -21,7 +21,7 @@ Note: There may be similar tips to compile for older iOS (not Mac OS X) versions
 
 Download
 --------
-[XcodeLegacy.sh](https://raw.githubusercontent.com/devernay/xcodelegacy/master/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh), [1.2](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.2.sh),  [1.3](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.3.sh), [1.4](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.4/XcodeLegacy.sh),  [1.5](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.5/XcodeLegacy.sh), [1.6](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.6/XcodeLegacy.sh),  [1.7](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.7/XcodeLegacy.sh), [1.8](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.8/XcodeLegacy.sh), [1.9](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.9/XcodeLegacy.sh))
+[XcodeLegacy.sh](https://raw.githubusercontent.com/devernay/xcodelegacy/master/XcodeLegacy.sh) (previous versions: [1.0](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.0.sh), [1.1](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.1.sh), [1.2](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.2.sh),  [1.3](http://devernay.free.fr/hacks/xcodelegacy/XcodeLegacy-1.3.sh), [1.4](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.4/XcodeLegacy.sh),  [1.5](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.5/XcodeLegacy.sh), [1.6](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.6/XcodeLegacy.sh),  [1.7](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.7/XcodeLegacy.sh), [1.8](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.8/XcodeLegacy.sh), [1.9](https://raw.githubusercontent.com/devernay/xcodelegacy/v1.9/XcodeLegacy.sh), [2.0](https://raw.githubusercontent.com/devernay/xcodelegacy/v2.0/XcodeLegacy.sh))
 
 [GitHub repository](https://github.com/devernay/xcodelegacy)
 
@@ -154,3 +154,4 @@ History
 - 1.6 (11/11/2015): Fix buildpackages, fix /usr/bin/gcc on recent OS X, fix download messages
 - 1.7 (05/04/2016): Xcode 7.3 disables support for older SDKs, fix that
 - 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
+- 2.0 (15/01/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too
