@@ -480,7 +480,7 @@ EOF
                 mkdir -p "$GCCDIR/tmp"
                 (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp"; tar xf -))
                 cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
-                cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/"
+                ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld"
                 rm -rf "$GCCDIR/tmp"
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
@@ -490,6 +490,14 @@ EOF
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
+                # Xcode 8's ld fails to link i386 for OSX 10.5: https://github.com/devernay/xcodelegacy/issues/30
+                # Since this ld is from Xcode 3.2.6 for OSX 10.6, this should be OK in most cases,
+                # but it may pose a problem if linking i386 with MACOSX_DEPLOYMENT_TARGET or -mmacosx-version-min > 10.6
+                # (but who would do such a thing?)
+                mkdir -p "$GCCDIR/usr/libexec/gcc/darwin/i386"
+                ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/i386/ld"
+                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386/ld"
                 # prevent overwriting the original ld if the script is run twice
                 if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
                     mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
@@ -523,7 +531,7 @@ else
         exit 1
 fi
 LD_RESULT=255
-if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH" = 'ppc64' ]; then
+if [ "\$ARCH" = 'ppc' -o "\$ARCH" = 'ppc7400' -o "\$ARCH" = 'ppc970' -o "\$ARCH" = 'ppc64' -o "\$ARCH" = 'i386' ]; then
         ARGS=()
         DEPINFO_FOUND=0
         for var in "\$@"; do
