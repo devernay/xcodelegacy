@@ -21,46 +21,6 @@
 #set -e
 #set -u
 
-if [ $# != 1 ]; then
-    #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
-    echo "Description: Extracts / installs / cleans / uninstalls the following components"
-    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1, which"
-    echo "are not available in Xcode >= 4.2:"
-    echo " - GCC 4.0 Xcode plugin"
-    echo " - PPC assembler and linker"
-    echo " - GCC 4.0 and 4.2"
-    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11"
-    echo ""
-    echo "An optional first argument may be provided to limit the operation (by default"
-    echo "everything is done):"
-    echo " -compilers : only install the gcc and llvm-gcc compilers, as well as the"
-    echo "              corresponding Xcode plugins"
-    echo " -osx104    : only install Mac OSX 10.4 SDK"
-    echo " -osx105    : only install Mac OSX 10.5 SDK"
-    echo " -osx106    : only install Mac OSX 10.6 SDK"
-    echo " -osx107    : only install Mac OSX 10.7 SDK"
-    echo " -osx108    : only install OSX 10.8 SDK"
-    echo " -osx109    : only install OSX 10.9 SDK"
-    echo " -osx1010   : only install OSX 10.10 SDK"
-    echo " -osx1011   : only install OSX 10.11 SDK"
-    echo "Note that these cannot be combined. For example, to build and install the 10.9"
-    echo "and 10.10 SDKs, one should execute:"
-    echo "$ $0 -osx109 buildpackages"
-    echo "$ $0 -osx1010 buildpackages"
-    echo "$ sudo $0 -osx109 install"
-    echo "$ sudo $0 -osx1010 install"
-    echo ""
-    echo "Typically, you will want to run this script with the buildpackages argument"
-    echo "first, then the install argument, and lastly the cleanpackages argument, in"
-    echo "order to properly install the legacy Xcode files."
-    echo "The install and uninstall phases have to be run with administrative rights, as"
-    echo "in:"
-    echo " $ sudo $0 install"
-    echo "installbeta and uninstallbeta work on the beta versions of Xcode"
-    exit
-fi
-
 compilers=0
 osx104=0
 osx105=0
@@ -120,6 +80,46 @@ case $1 in
         osx1011=1
         ;;
 esac
+
+if [ $# != 1 ]; then
+    #     ################################################################################ 80 cols
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Description: Extracts / installs / cleans / uninstalls the following components"
+    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1, which"
+    echo "are not available in Xcode >= 4.2:"
+    echo " - GCC 4.0 Xcode plugin"
+    echo " - PPC assembler and linker"
+    echo " - GCC 4.0 and 4.2"
+    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11"
+    echo ""
+    echo "An optional first argument may be provided to limit the operation (by default"
+    echo "everything is done):"
+    echo " -compilers : only install the gcc and llvm-gcc compilers, as well as the"
+    echo "              corresponding Xcode plugins"
+    echo " -osx104    : only install Mac OSX 10.4 SDK"
+    echo " -osx105    : only install Mac OSX 10.5 SDK"
+    echo " -osx106    : only install Mac OSX 10.6 SDK"
+    echo " -osx107    : only install Mac OSX 10.7 SDK"
+    echo " -osx108    : only install OSX 10.8 SDK"
+    echo " -osx109    : only install OSX 10.9 SDK"
+    echo " -osx1010   : only install OSX 10.10 SDK"
+    echo " -osx1011   : only install OSX 10.11 SDK"
+    echo "Note that these cannot be combined. For example, to build and install the 10.9"
+    echo "and 10.10 SDKs, one should execute:"
+    echo "$ $0 -osx109 buildpackages"
+    echo "$ $0 -osx1010 buildpackages"
+    echo "$ sudo $0 -osx109 install"
+    echo "$ sudo $0 -osx1010 install"
+    echo ""
+    echo "Typically, you will want to run this script with the buildpackages argument"
+    echo "first, then the install argument, and lastly the cleanpackages argument, in"
+    echo "order to properly install the legacy Xcode files."
+    echo "The install and uninstall phases have to be run with administrative rights, as"
+    echo "in:"
+    echo " $ sudo $0 install"
+    echo "installbeta and uninstallbeta work on the beta versions of Xcode"
+    exit
+fi
 
 XCODEDIR="/Developer"
 PLUGINDIR="$XCODEDIR/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
