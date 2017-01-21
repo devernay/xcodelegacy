@@ -89,24 +89,39 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 
 More information about the compilers included in each version of Xcode can be found on the [MacPorts Wiki](https://trac.macports.org/wiki/XcodeVersionInfo).
 
+### Linking for x86_64 on Xcode 4.4 and later
+
+If targetting 10.6, the following error may appear:
+```
+ For architecture x86_64: Undefinedsymbols
+
+ "_objc_retain", from: referenced
+
+     In libarclite_macosx.a ___ARCLite__load (arclite.o)
+
+    (youmeant: _objc_retainedObject maybe)
+
+Symbol not (s) found for architecture x86_64 ld:
+
+Error: linker command failed with exit code use 1 (-v to seeinvocation clang:)
+```
+
+Solution: in the Build Setting of the Project (not for the Target), set the setting "Implicitly Link Objective-C Runtime Support" to NO.
+ 
 ### Linking for ppc on Xcode 7.3 and later
 
-The following error may appear when linking a program using the older compilers from Xcode (command-line and Makefile-based builds should not be affected):
+Recent versions of Xcode and ld added several options. These are taken care of by the stub ld script (notably -object_path_lto xxx, -no_deduplicate, -dependency_info xxx), but after an Xcode upgrade new errors may appear, like:
+
 ```
 Running ld for ppc ...
 ld: unknown option: -object_path_lto
 ```
-or
-```
-Running ld for ppc ...
-ld: unknown option: -no_deduplicate
-```
-The reason is that the newer versions of the linker introduced the options `-object_path_lto` and `-no_deduplicate`, which Xcode adds by default. To disable this, add the following two User-Defined build setting in Xcode (by clicking on the `+` at the to of the right column in the Build Settings panel):
 
-- `LD_LTO_OBJECT_FILE` with an empty value
-- `LD_DONT_RUN_DEDUPLICATION` with value set to `NO`.
+There are two possible solutions:
 
-For future reference, other settings that control the link options are located in: `/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/Ld.xcspec`
+- check in the file `/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/Ld.xcspec` if there is an Xcode setting to disable that option (`LD_LTO_OBJECT_FILE` in the above case)
+- edit `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld` to prune the culprid option (and its argument)
+
 
 Known bugs (and fixes) in OS X SDKs
 -----------------------------------

@@ -497,18 +497,21 @@ EOF
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386"
+                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/x86_64"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
-                # Xcode 8's ld fails to link i386 for OSX 10.5: https://github.com/devernay/xcodelegacy/issues/30
-                # Since this ld is from Xcode 3.2.6 for OSX 10.6, this should be OK in most cases,
-                # but it may pose a problem if linking i386 with MACOSX_DEPLOYMENT_TARGET or -mmacosx-version-min > 10.6
-                # (but who would do such a thing?)
-                mkdir -p "$GCCDIR/usr/libexec/gcc/darwin/i386"
-                ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/i386/ld"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386/ld"
+                # Xcode 8's ld fails to link i386 and x86_64 for OSX 10.5: https://github.com/devernay/xcodelegacy/issues/30
+                # Since this ld is from Xcode 3.2.6 for OSX 10.6, this should be OK if the target OS is < 10.6
+                # (which is checked by the stub ld script)
+                for arch in i386 x86_64; do
+                    mkdir -p "$GCCDIR/usr/libexec/gcc/darwin/$arch"
+                    ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/$arch/ld"
+                    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/$arch"
+                    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/$arch/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/$arch/ld"
+                done
                 # prevent overwriting the original ld if the script is run twice
                 if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
                     mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
@@ -522,13 +525,43 @@ for var in "\$@"
 do
         if [ "\$ARCH_FOUND" -eq '1' ]; then
                 ARCH=\$var
+                ARCH_FOUND=2
                 break
-        elif [ "\$var" = '-arch' ]; then
-                ARCH_FOUND=1
+        else
+	        case "\$var" in
+		        -mmacosx-version-min=10.[0-6])
+			        MACOSX_DEPLOYMENT_TARGET=\$( echo \$var | sed -e s/-mmacosx-version-min=// )
+				;;
+			-arch)
+			        if [ "\$ARCH_FOUND" -ne '0' ]; then
+				    echo "Warning: ld: multiple -arch flags"
+				fi
+				ARCH_FOUND=1
+				;;
+		esac
         fi
+	
 done
 
-echo "Running ld for \$ARCH ..."
+# use the old (Snow Leopard 10.6) ld only if ppc arch or the target macOS is <= 10.6
+USE_OLD_LD=0
+case "\$ARCH" in
+	ppc*) #ppc ppc7400 ppc970 ppc64
+		USE_OLD_LD=1
+		;;
+esac
+
+if [ -n \${MACOSX_DEPLOYMENT_TARGET+x} ]; then
+	# MACOSX_DEPLOYMENT_TARGET can either be set externally as an env variable,
+	# or as an ld option using -mmacosx-version-min=10.x
+	case "\${MACOSX_DEPLOYMENT_TARGET}" in
+		10.[0-6])
+			USE_OLD_LD=1
+			;;
+	esac
+fi
+
+#echo "Running ld for \$ARCH ..."
 
 LD_DIR=\`dirname "\$0"\`
 if [ -x "\$LD_DIR/ld-original" ]; then
@@ -542,30 +575,43 @@ else
         exit 1
 fi
 LD_RESULT=255
-if [ "\$ARCH" = 'ppc' ] || [ "\$ARCH" = 'ppc7400' ] || [ "\$ARCH" = 'ppc970' ] || [ "\$ARCH" = 'ppc64' ] || [ "\$ARCH" = 'i386' ]; then
+if [ "\$USE_OLD_LD" -eq '1' ]; then
         ARGS=()
+	# strip the -dependency_info xxx, -object_path_lto xxx, -no_deduplicate flags
         DEPINFO_FOUND=0
+        OBJECT_PATH_LTO_FOUND=0
         for var in "\$@"; do
                 if [ "\$DEPINFO_FOUND" -eq '1' ]; then
                         DEPINFO_FOUND=0
                         continue
+                elif [ "\$OBJECT_PATH_LTO_FOUND" -eq '1' ]; then
+                        OBJECT_PATH_LTO_FOUND=0
+                        continue
                 elif [ "\$var" = '-dependency_info' ]; then
                         DEPINFO_FOUND=1
+                        continue
+                elif [ "\$var" = '-object_path_lto' ]; then
+                        OBJECT_PATH_LTO_FOUND=1
+                        continue
+                elif [ "\$var" = '-no_deduplicate' ]; then
                         continue
                 fi
 
                 ARGS+=("\$var")
         done
-        if [ -x "\$LD_DIR/../libexec/ld/\$ARCH/ld" ]; then
-                LD="\$LD_DIR/../libexec/ld/\$ARCH/ld"
-        elif [ -x "\$LD_DIR/../../../libexec/ld/\$ARCH/ld" ]; then
-                LD="\$LD_DIR/../../../libexec/ld/\$ARCH/ld"
-        elif [ -x "\$LD_DIR/../../../../libexec/ld/\$ARCH/ld" ]; then
-                LD="\$LD_DIR/../../../../libexec/ld/\$ARCH/ld"
-        elif [ -x "\$LD_DIR/../../../../../libexec/ld/\$ARCH/ld" ]; then
-                LD="\$LD_DIR/../../../../../libexec/ld/\$ARCH/ld"
+	# the old ld is put in the ppc dir so as not to disturb more recent archs (i386, x86_64)
+	# works with ppc ppc7400 ppc970 ppc64 i386 x86_64
+	LDARCHDIR=ppc
+        if [ -x "\$LD_DIR/../libexec/ld/\$LDARCHDIR/ld" ]; then
+                LD="\$LD_DIR/../libexec/ld/\$LDARCHDIR/ld"
+        elif [ -x "\$LD_DIR/../../../libexec/ld/\$LDARCHDIR/ld" ]; then
+                LD="\$LD_DIR/../../../libexec/ld/\$LDARCHDIR/ld"
+        elif [ -x "\$LD_DIR/../../../../libexec/ld/\$LDARCHDIR/ld" ]; then
+                LD="\$LD_DIR/../../../../libexec/ld/\$LDARCHDIR/ld"
+        elif [ -x "\$LD_DIR/../../../../../libexec/ld/\$LDARCHDIR/ld" ]; then
+                LD="\$LD_DIR/../../../../../libexec/ld/\$LDARCHDIR/ld"
         else
-                echo "Error: cannot find ld for \$ARCH in \$LD_DIR/../libexec/ld/\$ARCH \$LD_DIR/../../../libexec/ld/\$ARCH \$LD_DIR/../../../../libexec/ld/\$ARCH or \$LD_DIR/../../../../../libexec/ld/\$ARCH"
+                echo "Error: cannot find ld for \$ARCH in \$LD_DIR/../libexec/ld/\$LDARCHDIR \$LD_DIR/../../../libexec/ld/\$LDARCHDIR \$LD_DIR/../../../../libexec/ld/\$LDARCHDIR or \$LD_DIR/../../../../../libexec/ld/\$LDARCHDIR"
                 exit 1
         fi
         
@@ -838,13 +884,20 @@ SPEC_EOF
             if [ -f "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" ]; then
                 rm -rf "$PLUGINDIR/LLVM GCC 4.2.xcplugin"
             fi
-            rm -rf "$GCCDIR/usr/libexec/gcc/darwin/ppc" "$GCCDIR/usr/libexec/gcc/darwin/ppc64"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
-            rm -rf "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
+            for f in     "$GCCDIR/usr/libexec/gcc/darwin/ppc" \
+                         "$GCCDIR/usr/libexec/gcc/darwin/ppc64" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386" \
+                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/x86_64"; do
+                    if [ -e "$f" ]; then
+                            rm -rf "$f"
+                    fi
+            done
             if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
                 rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
                 mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
