@@ -942,20 +942,20 @@ SPEC_EOF
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
-        if [ $compilers = 1 ]; then
-            for b in gcc-4.0 g++-4.0 gcc-4.2 g++-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do
-                if [ -L $GCCLINKDIR/bin/$b ]; then
+        if [ "$compilers" = 1 ]; then
+            for b in c++-4.0 cpp-4.0 c++-4.2 cpp-4.2 gcc-4.0 g++-4.0 gcov-4.0 gcc-4.2 g++-4.2 gcov-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do
+                if [ -L $GCCLINKDIR/bin/$b ] && [ ! -e $GCCLINKDIR/bin/$b ]; then
                     rm $GCCLINKDIR/bin/$b
                 fi
             done
             for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do 
-                if [ -L $GCCLINKDIR/bin/i686-apple-darwin10-$b ]; then
+                if [ -L $GCCLINKDIR/bin/i686-apple-darwin10-$b ] && [ ! -e $GCCLINKDIR/bin/i686-apple-darwin10-$b ]; then
                     rm $GCCLINKDIR/bin/i686-apple-darwin10-$b
                 fi
             done
             for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do
-                if [ -L $GCCLINKDIR/usr/bin/powerpc-apple-darwin10-$b ]; then
-                    rm $GCCLINKDIR/usr/bin/powerpc-apple-darwin10-$b
+                if [ -L $GCCLINKDIR/bin/powerpc-apple-darwin10-$b ] && [ ! -e $GCCLINKDIR/bin/powerpc-apple-darwin10-$b ]; then
+                    rm $GCCLINKDIR/bin/powerpc-apple-darwin10-$b
                 fi
             done
         fi
