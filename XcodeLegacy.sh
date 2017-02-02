@@ -156,8 +156,8 @@ if [ "$(uname -r | awk -F. '{print $1}')" -gt 14 ]; then
     GCCLINKDIR=/usr/local
 fi
 
-GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/man/man7/gpl.7 usr/share/man/man1/*-4.0.1 usr/share/man/man1/*-4.0.1.1 usr/libexec/gcc/*-apple-darwin10/4.0.1 usr/lib/gcc/*-apple-darwin10/4.0.1 usr/include/gcc/darwin/4.0 usr/bin/*-4.0 usr/bin/*-4.0.1 usr/share/man/man1/*-4.2.1 usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1 usr/llvm-gcc-4.2 usr/share/man/man1/llvm-g*.1.gz"
-
+GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/man/man7/gpl.7 usr/share/man/man1/*-4.0.1 usr/share/man/man1/*-4.0.1.1 usr/libexec/gcc/*-apple-darwin10/4.0.1 usr/lib/gcc/*-apple-darwin10/4.0.1 usr/include/gcc/darwin/4.0 usr/bin/*-4.0 usr/bin/*-4.0.1 usr/share/man/man1/*-4.2.1 usr/share/man/man1/*-4.2.1.1 usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1"
+LLVMGCCFILES="usr/llvm-gcc-4.2 usr/share/man/man1/llvm-g*.1.gz"
 
 xc3="$(( compilers + osx104 + osx105 + osx106 != 0 ))"
 xc4="$(( compilers +  osx107 != 0 ))"
@@ -884,6 +884,8 @@ SPEC_EOF
             fi
             for f in     "$GCCDIR/usr/libexec/gcc/darwin/ppc" \
                          "$GCCDIR/usr/libexec/gcc/darwin/ppc64" \
+                         "$GCCDIR/usr/libexec/gcc/darwin/i386" \
+                         "$GCCDIR/usr/libexec/gcc/darwin/x86_64" \
                          "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc" \
                          "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64" \
                          "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc" \
@@ -900,9 +902,21 @@ SPEC_EOF
                 rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
                 mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
             fi
-            (cd "$GCCDIR" || exit; rm -rf $GCCFILES)
-            (cd "$GCCINSTALLDIR" || exit; rm -rf $GCCFILES)
-            rmdir "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
+            # preserve original LLVM-GCC on Xcode 4 and earlier
+            if [ ! -d "$GCCDIR/Library/Perl" ] || [ -d "$GCCDIR/Library/Perl/5.10" ]; then
+                mv "$GCCDIR"/usr/bin/{gcov,i686-apple-darwin1*-llvm-g{++,cc},llvm-{cpp,g++,gcc}}-4.2 "$GCCDIR"
+                (cd "$GCCDIR" || exit; rm -rf $GCCFILES )
+                mv "$GCCDIR"/*-4.2 "$GCCDIR"/usr/bin
+            else
+                [ -f "$GCCDIR/usr/bin/gcov-4.2" ] && [ ! -L "$GCCDIR/usr/bin/gcov-4.2" ] && mv "$GCCDIR/usr/bin/gcov-4.2" "$GCCDIR"
+                (cd "$GCCDIR" || exit; rm -rf $GCCFILES $LLVMGCCFILES)
+                [ -f "$GCCDIR/gcov-4.2" ] && mv "$GCCDIR/gcov-4.2" "$GCCDIR/usr/bin"
+            fi
+            (cd "$GCCINSTALLDIR" || exit; rm -rf $GCCFILES $LLVMGCCFILES)
+            rmdir "$GCCINSTALLDIR/usr/include/gcc/darwin" "$GCCINSTALLDIR/usr/include/gcc" || :
+            rmdir "$GCCINSTALLDIR/usr/lib/"{i686-apple-darwin10,powerpc-apple-darwin10}"/4.2.1" "$GCCINSTALLDIR/usr/lib/"{gcc/,}{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/lib/gcc" || :
+            rmdir "$GCCINSTALLDIR/usr/libexec/gcc/"{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/libexec/gcc" "$GCCINSTALLDIR/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
+            rmdir "$GCCINSTALLDIR/usr/share/man/man7" || :
             if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
                 rm "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
                 mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
@@ -943,6 +957,14 @@ SPEC_EOF
         fi
         
         if [ "$compilers" = 1 ]; then
+            if [ "$GCCINSTALLDIR/usr/bin/gcc" -ef "$GCCINSTALLDIR/usr/bin/clang" ]; then
+                rm "$GCCINSTALLDIR/usr/bin/gcc"
+            fi
+            for b in llvm-g++ llvm-gcc; do
+                if [ -L $GCCINSTALLDIR/usr/bin/$b ] && [ ! -e $GCCINSTALLDIR/usr/bin/$b ]; then
+                    rm $GCCINSTALLDIR/usr/bin/$b
+                fi
+            done
             for b in c++-4.0 cpp-4.0 c++-4.2 cpp-4.2 gcc-4.0 g++-4.0 gcov-4.0 gcc-4.2 g++-4.2 gcov-4.2 llvm-cpp-4.2 llvm-g++-4.2 llvm-gcc-4.2; do
                 if [ -L $GCCLINKDIR/bin/$b ] && [ ! -e $GCCLINKDIR/bin/$b ]; then
                     rm $GCCLINKDIR/bin/$b
