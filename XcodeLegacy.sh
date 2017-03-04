@@ -825,6 +825,12 @@ SPEC_EOF
             sed -e '/MinimumSDKVersion/{N;d;}' < "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" > "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
             echo "*** modified MacOSX Info.plist"
         fi
+
+        if [ ! -L /Developer/SDKs ]; then
+            echo "*** Warning: /Developer/SDKs should be a symlink to $SDKDIR/SDKs"
+            echo "check that /Developer exists, and fix /Developer/SDKs with:"
+            echo "sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
+        fi
         ;;
 
     cleanpackages)
