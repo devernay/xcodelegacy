@@ -2,7 +2,12 @@
 # XCodeLegacy.sh
 #
 # Original author: Frederic Devernay <frederic.devernay@m4x.org>
-# Contributor: Garrett Walbridge <gwalbridge+xcodelegacy@gmail.com>
+# Contributors:
+# - Garrett Walbridge <gwalbridge+xcodelegacy@gmail.com>
+# - Jae Liu <ling32945@github>
+# - Eric Knibbe <EricFromCanada@github>
+# - Chris Roueche <croueche@github>
+#
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
 # History:
@@ -16,7 +21,7 @@
 # 1.7 (05/04/2016): Xcode 7.3 disables support for older SDKs, fix that
 # 1.8 (07/04/2016): add options to install only some SDKs or compilers only
 # 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
-# 2.0 (15/01/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too
+# 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
 
 #set -e
 #set -u
@@ -251,7 +256,7 @@ case $1 in
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/DeveloperToolsCLI.pkg" /tmp/XC3
 
                 (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3 || exit; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64) |gzip -c > XcodePPCas.tar.gz) && echo "*** Created XcodePPCas.tar.gz in directory $(pwd)"
+                ( (cd /tmp/XC3 || exit; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64 usr/libexec/gcc/darwin/i386 usr/libexec/gcc/darwin/x86_64) |gzip -c > Xcode3as.tar.gz) && echo "*** Created Xcode3as.tar.gz in directory $(pwd)"
                 ( (cd /tmp/XC3 || exit; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory $(pwd)"
 
                 #(cp "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.0.pkg"  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory $(pwd)"
@@ -494,14 +499,86 @@ EOF
             fi
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
-                echo "*** Not installing XcodePPCas.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
+                echo "*** Not installing Xcode3as.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
             else
-                (gzip -dc XcodePPCas.tar.gz | (cd "$GCCDIR" || exit; tar xf -))
+                (gzip -dc Xcode3as.tar.gz | (cd "$GCCDIR" || exit; tar xf -))
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
                 mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
+                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/i386"
+                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/x86_64"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
-                echo "*** installed XcodePPCas.tar.gz"
+                # Xcodes >= 4 already include an acceptable GNU legacy assembler
+                # (v1.38) for i386 and x86_64 in $GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as.
+                # When they no longer do, enable these links (conditionally,
+                # of course).
+                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/i386/as"
+                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/x86_64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/x86_64/as"
+
+                # Replace Xcode's modern toolchain assembler with a script
+                # that auto-selects the proper legacy assembler based on the
+                # command line's -arch parameter. Using a legacy assembler fixes
+                # "ld: too many personality routines for compact unwind" errors
+                # and "section '__textcoal_nt' is deprecated" warnings emitted
+                # by Xcode 7+ assemblers.
+                # First, though, don't overwrite the original assembler if
+                # XcodeLegacy is installed twice.
+                if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" ]; then
+                    mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original"
+                fi
+                # NB: While only gcc uses the assembler in our builds (it pipes the
+                # output of usr/libexec/gcc/*-apple-darwin10/4.*/ccobj1plus into
+                # usr/libexec/gcc/*-apple-darwin10/4.*/as -> usr/bin/as), we can't
+                # simply change the link to, say, usr/libexec/gcc/darwin/i386/as
+                # because the assembler seems to want the -arch parameter to match
+                # its containing folder. Hence, a script (like for ld, below).
+                # NB: To keep it simple, the script assumes that anyone invoking
+                # the toolchain's usr/bin/as wants to use Xcode 3's assembler.
+                # NB: AS_DIR resolves as the directory of the (source) link that
+                # invoked the script.
+                cat <<AS_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/as
+#!/bin/bash
+
+ARCH=''
+ARCH_FOUND=0
+for var in "\$@"
+do
+        if [ "\$ARCH_FOUND" -eq '1' ]; then
+                ARCH=\$var
+				break;
+        elif [ "\$var" = '-arch' ]; then
+                ARCH_FOUND=1
+		fi
+done
+
+AS_DIR=\`dirname "\$0"\`
+AS_RESULT=255
+if [ "\$ARCH_FOUND" -eq '1' ]; then
+        if [ -x "\$AS_DIR/../../../as/\$ARCH/as" ]; then
+                AS="\$AS_DIR/../../../as/\$ARCH/as"
+        else
+                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH"
+                exit 1
+        fi
+
+        \`\$AS "\$@"\`
+        AS_RESULT=\$?
+else
+        if [ -x "\$AS_DIR/../../../../bin/as-original" ]; then
+                ASORIGINAL="\$AS_DIR/../../../../bin/as-original"
+        else
+                echo "Error: cannot find as-original in \$AS_DIR/../../../../bin/as-original"
+                exit 1
+        fi
+
+        \`\$ASORIGINAL "\$@"\`
+        AS_RESULT=\$?
+fi
+
+exit \$AS_RESULT
+AS_EOF
+                chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
+                echo "*** installed Xcode3as.tar.gz"
             fi
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
@@ -858,7 +935,7 @@ SPEC_EOF
         #
 
         if [ "$compilers" = 1 ]; then
-            rm XcodePluginGCC40.tar.gz XcodePPCas.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz Xcode3gcc40.tar.gz Xcode3gcc42.tar.gz Xcode3llvmgcc42.tar.gz 2>/dev/null
+            rm XcodePluginGCC40.tar.gz Xcode3as.tar.gz Xcode3ld.tar.gz xcode_3.2.6_gcc4.0.pkg xcode_3.2.6_gcc4.2.pkg xcode_3.2.6_llvm-gcc4.2.pkg XcodePluginGCC42-Xcode4.tar.gz XcodePluginGCC42.tar.gz XcodePluginLLVMGCC42.tar.gz Xcode3gcc40.tar.gz Xcode3gcc42.tar.gz Xcode3llvmgcc42.tar.gz 2>/dev/null
         fi
         #for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
         if [ "$osx104" = 1 ]; then
@@ -923,6 +1000,10 @@ SPEC_EOF
                             rm -rf "$f"
                     fi
             done
+            if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" ]; then
+                rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
+                mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
+            fi
             if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
                 rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
                 mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
