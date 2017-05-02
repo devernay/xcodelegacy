@@ -462,11 +462,30 @@ EOF
                 echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
             else
                 (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.0.xcplugin/legacy" && echo "*** installed XcodePluginGCC40.tar.gz"
+		# Add entries expected by later xcodebuilds.
+		mv "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec" "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original"
+                sed '$ i\
+\		ExecDescription = \"Compile \$\(InputFile\)\"\;\
+\		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
+\		ExecDescriptionForPrecompile = \"Precompile \$\(InputFile\)\"\;\
+\		ProgressDescriptionForPrecompile = \"Precompiling \$\(InputFile\)\"\;
+'  < "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original" > "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec"
+
+                echo "*** modified GCC 4.0.xcspec"
             fi
             if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ]; then
                 echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
             else
                 (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginGCC42.tar.gz"
+		# Add entries expected by later xcodebuilds.
+		mv "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original"
+                sed '$ i\
+\		ExecDescription = \"Compile \$\(InputFile\)\"\;\
+\		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
+\		ExecDescriptionForPrecompile = \"Precompile \$\(InputFile\)\"\;\
+\		ProgressDescriptionForPrecompile = \"Precompiling \$\(InputFile\)\"\;
+'  < "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original" > "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec"
+                echo "*** modified GCC 4.2.xcspec"
             fi
             if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
                 echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
