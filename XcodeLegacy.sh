@@ -181,9 +181,9 @@ case $1 in
             echo "*** you should download Xcode 3.2.6. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
+            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
             echo "or"
-            echo " http://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
+            echo " https://adcdownload.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -193,7 +193,7 @@ case $1 in
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
             echo "or"
-            echo " http://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+            echo " https://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             exit
         fi
@@ -203,7 +203,7 @@ case $1 in
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
             echo "or"
-            echo " http://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo " https://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -211,9 +211,9 @@ case $1 in
             echo "*** you should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "or"
-            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -221,9 +221,9 @@ case $1 in
             echo "*** you should download Xcode 7.3.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
+            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
             echo "or"
-            echo " http://adcdownload.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
+            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
