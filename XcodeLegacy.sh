@@ -195,7 +195,7 @@ case $1 in
             echo "or"
             echo " https://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
-            exit
+            missingdmg=1
         fi
         if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
             echo "*** you should download Xcode 5.1.1. Login to:"
@@ -1078,7 +1078,7 @@ SPEC_EOF
                     rm $GCCLINKDIR/bin/$b
                 fi
             done
-            for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do 
+            for b in cpp-4.2.1 gcc-4.0.1 g++-4.0.1 gcc-4.2.1 g++-4.2.1 llvm-g++-4.2 llvm-gcc-4.2; do
                 if [ -L $GCCLINKDIR/bin/i686-apple-darwin10-$b ] && [ ! -e $GCCLINKDIR/bin/i686-apple-darwin10-$b ]; then
                     rm $GCCLINKDIR/bin/i686-apple-darwin10-$b
                 fi
