@@ -556,8 +556,10 @@ AS_RESULT=255
 if [ "\$ARCH_FOUND" -eq '1' ]; then
         if [ -x "\$AS_DIR/../../../as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../as/\$ARCH/as"
+        elif [ -x "\$AS_DIR/../../../../../libexec/as/\$ARCH/as" ]; then
+                AS="\$AS_DIR/../../../../../libexec/as/\$ARCH/as"
         else
-                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH"
+                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH"
                 exit 1
         fi
 
