@@ -78,6 +78,7 @@ Note on Xcode versions
 
 Here are the latest versions of Xcode that are known to /run/ on each OS X version (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first):
 
+- [Xcode 2.5](http://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_2.5_developer_tools/xcode25_8m2558_developerdvd.dmg) on Mac OS X 10.4 (Tiger)
 - [Xcode 3.1.4](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.1.4_developer_tools/xcode314_2809_developerdvd.dmg) on Mac OS X 10.5 (Leopard)
 - [Xcode 3.2.6](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) on Mac OS X 10.6 (Snow Leopard) - [Xcode 4.0.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.0.2_and_ios_sdk_4.3/xcode_4.0.2_and_ios_sdk_4.3.dmg), [Xcode 4.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.1_for_snow_leopard_21110/xcode_4.1_for_snow_leopard.dmg) and [Xcode 4.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.2_with_ios_5_sdk/xcode_4.2_and_ios_5_sdk_for_snow_leopard.dmg) also run on Snow Leopard, but are only available to pay members 
 - [Xcode 4.6.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) on OS X 10.7 (Lion)
@@ -85,7 +86,7 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 6.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.2/Xcode_6.2.dmg) on OS X 10.9 (Mavericks)
 - [Xcode 7.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite)
 - [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) on OS X 10.11 (El Capitan), please see note on linking below. [Xcode 8.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8.2.1/Xcode_8.2.1.xip) also runs on OS X 10.11, but can only compile for macOS 10.12.
-- [Xcode 8.3.2](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8.3.2/Xcode_8.3.2.xip) on macOS 10.12 (Sierra), please see note on linking below.
+- [Xcode 8.3.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip) on macOS 10.12 (Sierra), please see note on linking below.
 
 More information about the compilers included in each version of Xcode can be found on the [MacPorts Wiki](https://trac.macports.org/wiki/XcodeVersionInfo).
 
@@ -110,7 +111,7 @@ Solution: in the Build Setting of the Project (not for the Target), set the sett
 
 ### Linking for ppc on Xcode 7.3 and later
 
-Recent versions of Xcode and ld added several options. These are taken care of by the stub ld script (notably -object_path_lto xxx, -no_deduplicate, -dependency_info xxx), but after an Xcode upgrade new errors may appear, like:
+Recent versions of Xcode and ld added several options. These should already be taken care of by the stub ld script (notably `-object_path_lto xxx`, `-no_deduplicate`, `-dependency_info xxx`), but after an Xcode upgrade new errors may appear that are not yet handled by XcodeLegacy, like:
 
 ```
 Running ld for ppc ...
@@ -120,7 +121,7 @@ ld: unknown option: -object_path_lto
 There are two possible solutions:
 
 - check in the file `/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/Ld.xcspec` if there is an Xcode setting to disable that option (`LD_LTO_OBJECT_FILE` in the above case)
-- edit `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld` to prune the culprid option (and its argument)
+- edit `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld` to prune the culprid option (and its argument if there is one).
 
 
 Known bugs (and fixes) in OS X SDKs
@@ -128,7 +129,7 @@ Known bugs (and fixes) in OS X SDKs
 
 ### Recent GCC versions cannot build universal binaries
 
-The GCC in Apple SDK is actually a small binary that lauches several compilers and merges the results (see [driverdriver.c](http://opensource.apple.com/source/gcc/gcc-5666.3/driverdriver.c)). The same executable can be compiled for recent GCC versions too, see [devernay/macportsGCCfixup](https://github.com/devernay/macportsGCCfixup) on github.
+The GCC in Apple SDK is actually a small binary that lauches several compilers and merges the results (see [driverdriver.c](http://opensource.apple.com/source/gcc/gcc-5666.3/driverdriver.c)). The same executable can be compiled for recent GCC versions too, see [devernay/macportsGCCfixup](https://github.com/devernay/macportsGCCfixup) on github, resulting in a GCC executable that can be given several architectures on the same command-line.
 
 ### bad_typeid dyld Error on Leopard (10.5)
 
