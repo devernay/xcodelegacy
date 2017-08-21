@@ -35,56 +35,76 @@ osx108=0
 osx109=0
 osx1010=0
 osx1011=0
+gotoption=0
+error=0
 
-case $1 in
-    -compilers)
-        compilers=1
-        shift
-        ;;
-    -osx104)
-        osx104=1
-        shift
-        ;;
-    -osx105)
-        osx105=1
-        shift
-        ;;
-    -osx106)
-        osx106=1
-        shift
-        ;;
-    -osx107)
-        osx107=1
-        shift
-        ;;
-    -osx108)
-        osx108=1
-        shift
-        ;;
-    -osx109)
-        osx109=1
-        shift
-        ;;
-    -osx1010)
-        osx1010=1
-        shift
-        ;;
-    -osx1011)
-        osx1011=1
-        shift
-        ;;
-    *)
-        compilers=1
-        osx104=1
-        osx105=1
-        osx106=1
-        osx107=1
-        osx108=1
-        osx109=1
-        osx1010=1
-        osx1011=1
-        ;;
-esac
+while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
+
+    case $1 in
+        -compilers)
+            compilers=1
+            gotoption=1
+            shift
+            ;;
+        -osx104)
+            osx104=1
+            gotoption=1
+            shift
+            ;;
+        -osx105)
+            osx105=1
+            gotoption=1
+            shift
+            ;;
+        -osx106)
+            osx106=1
+            gotoption=1
+            shift
+            ;;
+        -osx107)
+            osx107=1
+            gotoption=1
+            shift
+            ;;
+        -osx108)
+            osx108=1
+            gotoption=1
+            shift
+            ;;
+        -osx109)
+            osx109=1
+            gotoption=1
+            shift
+            ;;
+        -osx1010)
+            osx1010=1
+            gotoption=1
+            shift
+            ;;
+        -osx1011)
+            osx1011=1
+            gotoption=1
+            shift
+            ;;
+        *)
+            # unknown option or spurious arg
+            error=1
+            ;;
+    esac
+
+done
+
+if [ $gotoption = 0 ]; then
+    compilers=1
+    osx104=1
+    osx105=1
+    osx106=1
+    osx107=1
+    osx108=1
+    osx109=1
+    osx1010=1
+    osx1011=1
+fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
