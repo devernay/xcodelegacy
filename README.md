@@ -56,11 +56,11 @@ Using the older SDKs
 To use any of the older SDKs, you should:
 
 - compile and link with the options `-mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk`
-- set the environment variable `MACOSX_DEPLOYMENT_TARGET` to the proper value (e.g. 10.5) - this should be redundant with the `-mmacosx-version-min`compiler option, but older compilers do not seem to pass this option to the linker.
+- set the environment variable `MACOSX_DEPLOYMENT_TARGET` to the proper value (e.g. 10.5) and also set `SDKROOT` to the location of the SDK - these should be redundant with the `-mmacosx-version-min` and `-isysroot` compiler options, but older compilers do not seem to pass this option to the linker.
 
 For example:
 ```
-env MACOSX_DEPLOYMENT_TARGET=10.6 clang -arch i386 -arch x86_64 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk main.c -o main
+env MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=/Developer/SDKs/MacOSX10.6.sdk clang -arch i386 -arch x86_64 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk main.c -o main
 ```
 
 Using the older compilers 
