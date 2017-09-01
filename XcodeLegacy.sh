@@ -23,8 +23,9 @@
 # 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
 # 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
 
-#set -e
-#set -u
+#set -e # Exit immediately if a command exits with a non-zero status
+#set -u # Treat unset variables as an error when substituting.
+#set -x # Print commands and their arguments as they are executed.
 
 compilers=0
 osx104=0
@@ -304,7 +305,36 @@ case $1 in
             rm -rf /tmp/XC3
 
             if [ "$osx104" = 1 ] || [ "$osx105" = 1 ]; then
-                cat > /tmp/hashtable.patch <<EOF
+                # use the latest version of the hashtable include, as recommended by:
+                # http://wiki.inkscape.org/wiki/index.php/HashtableFixOSX
+                # http://permalink.gmane.org/gmane.comp.graphics.inkscape.devel/32966
+                # The version from gcc 4.0.4 fixes these four bugs:
+                #
+                # GCC Bugzilla Bug 23053
+                # Const-correctness issue in TR1 hashtable
+                # <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053>
+                #
+                # GCC Bugzilla Bug 23465
+                # Assignment fails on TR1 unordered containers
+                # <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=23465>
+                #
+                # GCC Bugzilla Bug 24054
+                # std::tr1::unordered_map's erase does not seem to return a value
+                # <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=24054>
+                #
+                # GCC Bugzilla Bug 24064
+                # tr1::unordered_map seems to seg-fault when caching hash values
+                # <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=24064>
+
+                # see also:
+                # http://wayback.archive.org/web/20100810175143/http://mohri-lt.cs.nyu.edu:80/twiki/bin/view/FST/CompilingOnMacOSX
+                # (only fixes GCC Bugzilla Bug 23465)
+
+                #curl -A 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6' 'https://gcc.gnu.org/viewcvs/gcc/branches/gcc-4_0-branch/libstdc%2B%2B-v3/include/tr1/hashtable?revision=95538&view=co' -o hashtable-gcc-4.0.0
+                #curl -A 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6' 'https://gcc.gnu.org/viewcvs/gcc/branches/gcc-4_0-branch/libstdc%2B%2B-v3/include/tr1/hashtable?revision=104939&view=co' -o hashtable-gcc-4.0.4
+                if false; then
+                    # older version of the patch, for the record (only fixes 23053 and 23465)
+                    cat > /tmp/hashtable.patch <<EOF
 --- hashtable.orig	2015-09-01 14:43:32.000000000 +0200
 +++ hashtable	2010-09-03 22:41:42.000000000 +0200
 @@ -860,7 +860,7 @@
@@ -338,6 +368,7 @@ case $1 in
    for ( ; p ; p = p->m_next)
      if (this->compare (k, code, p))
 EOF
+                fi
             fi
             
             if [ "$osx104" = 1 ]; then
@@ -353,7 +384,9 @@ EOF
                 # Fix tr1/hashtable
                 # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
                 # in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
-                (cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
+                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
 
                 # Add links for compatibility with GCC 4.2
                 ln -s 4.0.1 $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.2.1
@@ -383,11 +416,14 @@ EOF
                 # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
                 # in SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1/hashtable
                 # this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
-                (cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
+                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
             fi
 
             if [ "$osx104" = 1 ] || [ "$osx105" = 1 ]; then
-                rm /tmp/hashtable.patch
+                true
+                #rm /tmp/hashtable.patch
             fi
 
             if [ $osx105 = 1 ] || [ $osx106 = 1 ]; then
