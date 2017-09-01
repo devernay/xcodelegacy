@@ -344,15 +344,24 @@ EOF
                 test -d /tmp/XC3-10.4 && rm -rf /tmp/XC3-10.4
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.4.Universal.pkg" /tmp/XC3-10.4
                 (cd /tmp/XC3-10.4 || exit; gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
+                SDKROOT=/tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
-                ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
+                ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
                 # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
-                ln -s libstdc++.6.dylib /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/lib/libstdc++.dylib
+                ln -s libstdc++.6.dylib $SDKROOT/usr/lib/libstdc++.dylib
                 # Fix tr1/hashtable
                 # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
                 # in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
-                (cd /tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                (cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+
+                # Add links for compatibility with GCC 4.2
+                ln -s 4.0.1 $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.2.1
+                ln -s 4.0.1 $SDKROOT/usr/lib/gcc/powerpc-apple-darwin10/4.2.1
+                ln -s 4.0.1 $SDKROOT/usr/lib/i686-apple-darwin10/4.2.1
+                ln -s 4.0.1 $SDKROOT/usr/lib/powerpc-apple-darwin10/4.2.1
+                ln -s 4.0.0 $SDKROOT/usr/include/c++/4.2.1
+
                 ( (cd /tmp/XC3-10.4 || exit; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory $(pwd)"
                 rm -rf /tmp/XC3-10.4
             fi
@@ -361,19 +370,20 @@ EOF
                 test -d /tmp/XC3-10.5 && rm -rf /tmp/XC3-10.5
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.5.pkg" /tmp/XC3-10.5
                 (cd /tmp/XC3-10.5 || exit; gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
+                SDKROOT=/tmp/XC3-10.5/SDKs/MacOSX10.5.sdk
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
-                ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
-                ln -s ../../../i686-apple-darwin10/4.2.1/libstdc++.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/gcc/i686-apple-darwin10/4.2.1/libstdc++.dylib
+                ln -s ../../../i686-apple-darwin10/4.0.1/libstdc++.dylib $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.0.1/libstdc++.dylib
+                ln -s ../../../i686-apple-darwin10/4.2.1/libstdc++.dylib $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.2.1/libstdc++.dylib
                 # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
-                ln -s libstdc++.6.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libstdc++.dylib
+                ln -s libstdc++.6.dylib $SDKROOT/usr/lib/libstdc++.dylib
                 # fix AvailabilityInternal.h (see https://trac.macports.org/wiki/LeopardSDKFixes)
-                sed -i.orig -e 's/define __MAC_OS_X_VERSION_MAX_ALLOWED __MAC_10_6/define __MAC_OS_X_VERSION_MAX_ALLOWED 1058/' /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/AvailabilityInternal.h
+                sed -i.orig -e 's/define __MAC_OS_X_VERSION_MAX_ALLOWED __MAC_10_6/define __MAC_OS_X_VERSION_MAX_ALLOWED 1058/' $SDKROOT/usr/include/AvailabilityInternal.h
                 # Fix tr1/hashtable
                 # see http://www.openfst.org/twiki/bin/view/FST/CompilingOnMacOSX https://gcc.gnu.org/ml/libstdc++/2005-08/msg00017.html https://gcc.gnu.org/bugzilla/show_bug.cgi?id=23053
                 # in SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1/hashtable
                 # this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
-                (cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
+                (cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
             fi
 
             if [ "$osx104" = 1 ] || [ "$osx105" = 1 ]; then
