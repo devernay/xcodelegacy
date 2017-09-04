@@ -17,6 +17,8 @@ I made the script XcodeLegacy.sh to extract these components (the links work if 
 - PPC assembler
 - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11
 
+The script also fixes a few known bugs in the 10.4 and 10.5 SDK.
+
 Note: There may be similar tips to compile for older iOS (not Mac OS X) versions, but I don't develop for iOS. However, if you want to enhace the XcodeLegacy script to also include those components, I'll gladly integrate your modifications.
 
 Download
@@ -69,6 +71,8 @@ Using the older compilers
 Links to the compilers are installed in `/usr/bin` (or `/usr/local/bin` on OS X 10.11 El Capitan and later): `gcc-4.0` `g++-4.0` `gcc-4.2` `g++-4.2` `llvm-cpp-4.2` `llvm-g++-4.2` `llvm-gcc-4.2`.
 
 GCC 4.0, GCC 4.2 and LLVM GCC 4.2 cannot compile for OS X 10.10 or newer.
+
+The script also fixes the Mac OS X 10.4 SDK so that it works with GCC 4.2 and LLVM GCC 4.2, and later compilers (officially, it only supports GCC 4.0).
 
 PowerPC architectures (ppc, ppc7400, ppc970, ppc64) cannot be linked for OS X 10.7 or newer (they would be useless anyway, since PowerPC CPUs were only supported up to 10.5).
 
