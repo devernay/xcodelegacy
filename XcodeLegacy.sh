@@ -1155,7 +1155,7 @@ SPEC_EOF
                 fi
             done
         fi
-        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ]; then
+        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ] && [ $(ls -1 "$SDKDIR"/SDKs/MacOSX*.sdk/legacy 2>/dev/null | wc -l) -eq 0 ]; then
             rm "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
             mv -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
         fi
