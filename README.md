@@ -135,9 +135,19 @@ Known bugs (and fixes) in OS X SDKs
 
 The GCC in Apple SDK is actually a small binary that lauches several compilers and merges the results (see [driverdriver.c](http://opensource.apple.com/source/gcc/gcc-5666.3/driverdriver.c)). The same executable can be compiled for recent GCC versions too, see [devernay/macportsGCCfixup](https://github.com/devernay/macportsGCCfixup) on github, resulting in a GCC executable that can be given several architectures on the same command-line.
 
-### bad_typeid dyld Error on Leopard (10.5)
+### bad_typeid dyld Error when running executable on Leopard (10.5)
 
-This is a bug in the 10.6 (and later) SDKs, which can be easily fixed:
+This bug happens when building with the 10.6 or 10.7 SDK, but targetting 10.5. The 10.5 SDK uses `libstdc++.6.0.4.dylib` whereas later SDKs use `libstdc++.6.0.9.dylib`.
+
+It can be fixed by adding this snippet somewhere in your code:
+```
+#include <AvailibilityMacros.h>
+#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
+const char* ::std::bad_typeid::what() const throw() { return NULL; }
+#endif
+```
+
+References:
 
 - http://lists.apple.com/archives/xcode-users/2010/May/msg00183.html
 - http://stackoverflow.com/questions/12980931/how-to-ignore-out-of-line-definition-error-in-xcode-with-llvm-4-1
