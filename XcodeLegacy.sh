@@ -130,12 +130,10 @@ if [ $# != 1 ]; then
     echo " -osx109    : only install OSX 10.9 SDK"
     echo " -osx1010   : only install OSX 10.10 SDK"
     echo " -osx1011   : only install OSX 10.11 SDK"
-    echo "Note that these cannot be combined. For example, to build and install the 10.9"
-    echo "and 10.10 SDKs, one should execute:"
-    echo "$ $0 -osx109 buildpackages"
-    echo "$ $0 -osx1010 buildpackages"
-    echo "$ sudo $0 -osx109 install"
-    echo "$ sudo $0 -osx1010 install"
+    echo "Note that these can be combined. For example, to build and install the 10.9"
+    echo "and 10.10 SDKs, one could execute:"
+    echo "$ $0 -osx109 -osx1010 buildpackages"
+    echo "$ sudo $0 -osx109 -osx1010 install"
     echo ""
     echo "Typically, you will want to run this script with the buildpackages argument"
     echo "first, then the install argument, and lastly the cleanpackages argument, in"
@@ -1105,7 +1103,7 @@ SPEC_EOF
             i=10.5
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
-        if [ $osx106 = 1 ]; then
+        if [ "$osx106" = 1 ]; then
             i=10.6
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
