@@ -62,20 +62,27 @@ To use any of the older SDKs, you should:
 
 For example:
 ```
-env MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=/Developer/SDKs/MacOSX10.6.sdk clang -arch i386 -arch x86_64 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk main.c -o main
+env MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=/Developer/SDKs/MacOSX10.6.sdk clang -arch i386 -arch x86_64 \
+  -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk main.c -o main
 ```
 
 When using a Makefile-based build, similarly set the environment variables and use the compilation flags both at compile-time and at link-time (these should typically be added to the `CFLAGS` and `LDFLAGS` in the Makefile).
 
 When using a GNU configure-based project, pass these flags to the configure script, as in:
 ```
-./configure CFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" CXXFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" LDFLAGS="-mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk"
+./configure CFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" \
+            CXXFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" \
+            LDFLAGS="-mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk"
 ```
 
 When using Xcode, set the "Base SDK" and "macOS Deployment Target" build settings of the project to the right version. Perhaps a better option is to use the command-line utility `xcodebuild` to build using these values, rather than modifying the Xcode project file itself, as in:
 ```
-xcodebuild MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=macosx10.6
+xcodebuild MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=macosx10.6 GCC_VERSION=4.2 CLANG_CXX_LIBRARY=libstdc++ \
+ ARCHS="ppc7400 ppc64 i386 x86_64"
 ```
+Useful values for `GCC_VERSION` are `4.0`, `4.2`, `com.apple.compilers.llvmgcc42`, `com.apple.compilers.llvm.clang.1_0`. You can use GCC 4.2 or LLVM GCC 4.2 with the 10.4 SDK by passing the `CC` and `CXX` options too, as in `GCC_VERSION=4.0 CC=gcc-4.2 CXX=g++-4.2`.
+
+Valid archs are `ppc`, `ppc7400` (PowerPC G4, minimum CPU requirement to run 10.5), `ppc7450`, `ppc970` (PowerPC G5 32-bit), `ppc64`, `i386`, `x86_64` (minimum CPU requirement to run 10.7).
 
 Using the older compilers 
 -------------------------
