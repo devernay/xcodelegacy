@@ -82,7 +82,7 @@ xcodebuild MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=macosx10.6 GCC_VERSION=4.2 CLAN
 ```
 Useful values for `GCC_VERSION` are `4.0`, `4.2`, `com.apple.compilers.llvmgcc42`, `com.apple.compilers.llvm.clang.1_0`. You can use GCC 4.2 or LLVM GCC 4.2 with the 10.4 SDK by passing the `CC` and `CXX` options too, as in `GCC_VERSION=4.0 CC=gcc-4.2 CXX=g++-4.2`.
 
-Valid archs are `ppc`, `ppc7400` (PowerPC G4, minimum CPU requirement to run 10.5), `ppc7450`, `ppc970` (PowerPC G5 32-bit), `ppc64`, `i386`, `x86_64` (minimum CPU requirement to run 10.7).
+Valid archs are `ppc`, `ppc7400` (PowerPC G4, minimum CPU requirement to run 10.5), `ppc7450`, `ppc970` (PowerPC G5 32-bit), `ppc64`, `i386`, `x86_64` (minimum CPU requirement to run 10.7). The `dsymutil` utility provided with Xcode 7 and later does not work on PPC binaries, so if the `GenerateDSYMFile` phase fails, just pass the additional option `DEBUG_INFORMATION_FORMAT=dwarf` to `xcodebuild`.
 
 Using the older compilers 
 -------------------------
