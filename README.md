@@ -65,6 +65,18 @@ For example:
 env MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=/Developer/SDKs/MacOSX10.6.sdk clang -arch i386 -arch x86_64 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk main.c -o main
 ```
 
+When using a Makefile-based build, similarly set the environment variables and use the compilation flags both at compile-time and at link-time (these should typically be added to the `CFLAGS` and `LDFLAGS` in the Makefile).
+
+When using a GNU configure-based project, pass these flags to the configure script, as in:
+```
+./configure CFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" CXXFLAGS="-g -O2 -mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk" LDFLAGS="-mmacosx-version-min=10.6 -isysroot /Developer/SDKs/MacOSX10.6.sdk"
+```
+
+When using Xcode, set the "Base SDK" and "macOS Deployment Target" build settings of the project to the right version. Perhaps a better option is to use the command-line utility `xcodebuild` to build using these values, rather than modifying the Xcode project file itself, as in:
+```
+xcodebuild MACOSX_DEPLOYMENT_TARGET=10.6 SDKROOT=macosx10.6
+```
+
 Using the older compilers 
 -------------------------
 
