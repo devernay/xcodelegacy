@@ -267,7 +267,7 @@ case $1 in
                 (cd /tmp/XC3 || exit;gzip -dc Payload  |cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
                 ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "*** Created XcodePluginGCC40.tar.gz in directory $(pwd)"
                 ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "*** Created XcodePluginGCC42.tar.gz in directory $(pwd)"
-                ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory $(pwd)"
+                #( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "LLVM GCC 4.2.xcplugin") | gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory $(pwd)"
                 # should be untarred in /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins
                 # gzip -dc XcodePluginGCC40.tar.gz | (cd /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins || exit; sudo tar xvf -)
 
