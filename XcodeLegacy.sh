@@ -961,7 +961,7 @@ SPEC_EOF
                                 ln -sf "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} "$GCCLINKDIR"/bin/${p}${i}-${v}
                             fi
                             if [ ! -f "$GCCDIR"/usr/bin/${p}${i}-${v} ]; then
-                                echo "* creating link $GCCDIR/usr/bin/${i}-${v}"
+                                echo "* creating link $GCCDIR/usr/bin/${p}${i}-${v}"
                                 ln -sf "$GCCINSTALLDIR"/usr/bin/${p}${i}-${v} "$GCCDIR"/usr/bin/${p}${i}-${v}
                             fi
                         fi
