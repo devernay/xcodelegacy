@@ -173,7 +173,8 @@ fi
 #SANDBOX=0
 GCCINSTALLDIR="$GCCDIR/Toolchains/XcodeDefault.xctoolchain"
 GCCLINKDIR=/usr
-if [ "$(uname -r | awk -F. '{print $1}')" -gt 14 ]; then
+RELEASENUM=$(uname -r | awk -F. '{print $1}')
+if [ "$RELEASENUM" -gt 14 ]; then
     # on OSX 10.11 El Capitan, nothing can be installed in /usr because of the Sandbox
     # install in Xcode instead, and put links in /usr/local
     #SANDBOX=1
@@ -933,15 +934,21 @@ SPEC_EOF
                 #installer -pkg xcode_3.2.6_gcc4.2.pkg -target /
                 (gzip -dc Xcode3gcc42.tar.gz | (cd "$GCCINSTALLDIR" || exit; tar xf -)) && echo "*** installed Xcode3gcc42.tar.gz"
             fi
-            if [ -f /usr/bin/llvm-gcc-4.2 ]; then
-                #echo "*** Not installing xcode_3.2.6_llvm-gcc4.2.pkg (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
-                echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in /usr/bin/llvm-gcc-4.2, uninstall first to force install)"
-            elif [ -f "$GCCINSTALLDIR/usr/bin/llvm-gcc-4.2" ]; then
+            if [ -f "$GCCINSTALLDIR/usr/bin/llvm-gcc-4.2" ]; then
                 echo "*** Not installing Xcode3llvmgcc42.tar.gz (found installed in $GCCINSTALLDIR/usr/bin/llvm-gcc-4.2, uninstall first to force install)"
             else
                 echo "*** Installing LLVM GCC 4.2"
                 #installer -pkg xcode_3.2.6_llvm-gcc4.2.pkg -target /
                 (gzip -dc Xcode3llvmgcc42.tar.gz | (cd "$GCCINSTALLDIR" || exit; tar xf -)) && echo "*** installed Xcode3llvmgcc42.tar.gz"
+                if [ -f "$GCCDIR/usr/llvm-gcc-4.2/bin/llvm-gcc-4.2" ]; then
+                    for i in g++ gcc; do
+                        ln -sf "$GCCINSTALLDIR"/usr/bin/powerpc-apple-darwin10-llvm-${i}-4.2 "$GCCDIR"/usr/bin/powerpc-apple-darwin"$RELEASENUM"-llvm-${i}-4.2
+                        ln -sf "$GCCINSTALLDIR"/usr/llvm-gcc-4.2/bin/powerpc-apple-darwin10-llvm-${i}-4.2 "$GCCDIR"/usr/llvm-gcc-4.2/bin/powerpc-apple-darwin"$RELEASENUM"-llvm-${i}-4.2
+                        ln -sf "$GCCINSTALLDIR"/usr/llvm-gcc-4.2/share/man/man1/powerpc-apple-darwin10-llvm-${i}.1.gz "$GCCDIR"/usr/llvm-gcc-4.2/share/man/man1/powerpc-apple-darwin"$RELEASENUM"-llvm-${i}.1.gz
+                    done
+                    ln -sf "$GCCINSTALLDIR"/usr/llvm-gcc-4.2/lib/gcc/powerpc-apple-darwin10 "$GCCDIR"/usr/llvm-gcc-4.2/lib/gcc/powerpc-apple-darwin10
+                    ln -sf "$GCCINSTALLDIR"/usr/llvm-gcc-4.2/libexec/gcc/powerpc-apple-darwin10 "$GCCDIR"/usr/llvm-gcc-4.2/libexec/gcc/powerpc-apple-darwin10
+                fi
             fi
             
             echo "*** Create symbolic links to compliers in $GCCDIR and $GCCLINKDIR:"
@@ -1082,9 +1089,10 @@ SPEC_EOF
             fi
             # preserve original LLVM-GCC on Xcode 4 and earlier
             if [ ! -d "$GCCDIR/Library/Perl" ] || [ -d "$GCCDIR/Library/Perl/5.10" ]; then
-                mv "$GCCDIR"/usr/bin/{gcov,i686-apple-darwin1*-llvm-g{++,cc},llvm-{cpp,g++,gcc}}-4.2 "$GCCDIR"
+                mv "$GCCDIR"/usr/bin/{gcov,i686-apple-darwin"$RELEASENUM"-llvm-g{++,cc},llvm-{cpp,g++,gcc}}-4.2 "$GCCDIR"
                 (cd "$GCCDIR" || exit; rm -rf $GCCFILES )
                 mv "$GCCDIR"/*-4.2 "$GCCDIR"/usr/bin
+                (cd "$GCCDIR/usr/llvm-gcc-4.2" || exit; rm -f {bin,lib/gcc,libexec/gcc,share/man/man1}/powerpc*)
             else
                 [ -f "$GCCDIR/usr/bin/gcov-4.2" ] && [ ! -L "$GCCDIR/usr/bin/gcov-4.2" ] && mv "$GCCDIR/usr/bin/gcov-4.2" "$GCCDIR"
                 (cd "$GCCDIR" || exit; rm -rf $GCCFILES $LLVMGCCFILES)
