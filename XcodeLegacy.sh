@@ -110,12 +110,13 @@ fi
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
     echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
     echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1, which"
     echo "are not available in Xcode >= 4.2:"
-    echo " - GCC 4.0 Xcode plugin"
     echo " - PPC assembler and linker"
-    echo " - GCC 4.0 and 4.2"
+    echo " - GCC 4.0 and 4.2 compilers and Xcode plugins"
+    echo " - LLVM-GCC 4.2 compiler and Xcode plugin (Xcode >= 5)"
     echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default"
@@ -132,8 +133,8 @@ if [ $# != 1 ]; then
     echo " -osx1011   : only install OSX 10.11 SDK"
     echo "Note that these can be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one could execute:"
-    echo "$ $0 -osx109 -osx1010 buildpackages"
-    echo "$ sudo $0 -osx109 -osx1010 install"
+    echo " $ $0 -osx109 -osx1010 buildpackages"
+    echo " $ sudo $0 -osx109 -osx1010 install"
     echo ""
     echo "Typically, you will want to run this script with the buildpackages argument"
     echo "first, then the install argument, and lastly the cleanpackages argument, in"
@@ -141,7 +142,7 @@ if [ $# != 1 ]; then
     echo "The install and uninstall phases have to be run with administrative rights, as"
     echo "in:"
     echo " $ sudo $0 install"
-    echo "installbeta and uninstallbeta work on the beta versions of Xcode"
+    echo "The installbeta and uninstallbeta phases work on the beta versions of Xcode."
     exit
 fi
 
@@ -154,7 +155,7 @@ if [ -d "$PLUGINDIR" ]; then
 else
     PLUGINDIR="/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
     if [ ! -d "$PLUGINDIR" ]; then
-        echo "Info: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app"
+        echo "*** Info: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app"
     fi
     echo "*** Info: found Xcode >= 4.3"
     GCCDIR="/Applications/Xcode.app/Contents/Developer"
@@ -185,7 +186,7 @@ GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/m
 LLVMGCCFILES="usr/llvm-gcc-4.2 usr/share/man/man1/llvm-g*.1.gz"
 
 xc3="$(( compilers + osx104 + osx105 + osx106 != 0 ))"
-xc4="$(( compilers +  osx107 != 0 ))"
+xc4="$(( compilers + osx107 != 0 ))"
 xc5="$(( osx108 != 0 ))"
 xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
@@ -265,9 +266,9 @@ case $1 in
             if [ "$compilers" = 1 ]; then
                 rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/DeveloperTools.pkg" /tmp/XC3
-                (cd /tmp/XC3 || exit;gzip -dc Payload  |cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.0.xcplugin") |gzip -c > XcodePluginGCC40.tar.gz) && echo "*** Created XcodePluginGCC40.tar.gz in directory $(pwd)"
-                ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42.tar.gz) && echo "*** Created XcodePluginGCC42.tar.gz in directory $(pwd)"
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet Library/Xcode/Plug-ins) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+                ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.0.xcplugin") | gzip -c > XcodePluginGCC40.tar.gz) && echo "*** Created XcodePluginGCC40.tar.gz in directory $(pwd)"
+                ( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "GCC 4.2.xcplugin") | gzip -c > XcodePluginGCC42.tar.gz) && echo "*** Created XcodePluginGCC42.tar.gz in directory $(pwd)"
                 #( (cd /tmp/XC3/Library/Xcode/Plug-ins || exit; tar cf - "LLVM GCC 4.2.xcplugin") | gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory $(pwd)"
                 # should be untarred in /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins
                 # gzip -dc XcodePluginGCC40.tar.gz | (cd /Developer/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins || exit; sudo tar xvf -)
@@ -275,30 +276,30 @@ case $1 in
                 rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/DeveloperToolsCLI.pkg" /tmp/XC3
 
-                (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3 || exit; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64 usr/libexec/gcc/darwin/i386 usr/libexec/gcc/darwin/x86_64) |gzip -c > Xcode3as.tar.gz) && echo "*** Created Xcode3as.tar.gz in directory $(pwd)"
-                ( (cd /tmp/XC3 || exit; tar cf - usr/bin/ld) |gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory $(pwd)"
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet usr/bin usr/libexec) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+                ( (cd /tmp/XC3 || exit; tar cf - usr/libexec/gcc/darwin/ppc usr/libexec/gcc/darwin/ppc64 usr/libexec/gcc/darwin/i386 usr/libexec/gcc/darwin/x86_64) | gzip -c > Xcode3as.tar.gz) && echo "*** Created Xcode3as.tar.gz in directory $(pwd)"
+                ( (cd /tmp/XC3 || exit; tar cf - usr/bin/ld) | gzip -c > Xcode3ld.tar.gz) && echo "*** Created Xcode3ld.tar.gz in directory $(pwd)"
 
-                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.0.pkg"  xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory $(pwd)"
+                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.0.pkg" xcode_3.2.6_gcc4.0.pkg) && echo "*** Created xcode_3.2.6_gcc4.0.pkg in directory $(pwd)"
                 rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.0.pkg" /tmp/XC3
 
-                (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3 || exit; tar cf - usr) |gzip -c > Xcode3gcc40.tar.gz) && echo "*** Created Xcode3gcc40.tar.gz in directory $(pwd)"
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+                ( (cd /tmp/XC3 || exit; tar cf - usr) | gzip -c > Xcode3gcc40.tar.gz) && echo "*** Created Xcode3gcc40.tar.gz in directory $(pwd)"
 
-                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.2.pkg"  xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory $(pwd)"
+                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.2.pkg" xcode_3.2.6_gcc4.2.pkg) && echo "*** Created xcode_3.2.6_gcc4.2.pkg in directory $(pwd)"
                 rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/gcc4.2.pkg" /tmp/XC3
 
-                (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3 || exit; tar cf - usr) |gzip -c > Xcode3gcc42.tar.gz) && echo "*** Created Xcode3gcc42.tar.gz in directory $(pwd)"
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+                ( (cd /tmp/XC3 || exit; tar cf - usr) | gzip -c > Xcode3gcc42.tar.gz) && echo "*** Created Xcode3gcc42.tar.gz in directory $(pwd)"
 
-                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/llvm-gcc4.2.pkg"  xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory $(pwd)"
+                #(cp "$MNTDIR/Xcode and iOS SDK/Packages/llvm-gcc4.2.pkg" xcode_3.2.6_llvm-gcc4.2.pkg) && echo "*** Created xcode_3.2.6_llvm-gcc4.2.pkg in directory $(pwd)"
                 rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/llvm-gcc4.2.pkg" /tmp/XC3
 
-                (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
-                ( (cd /tmp/XC3 || exit; tar cf - usr) |gzip -c > Xcode3llvmgcc42.tar.gz) && echo "*** Created Xcode3llvmgcc42.tar.gz in directory $(pwd)"
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet usr) #we only need these, see https://github.com/devernay/xcodelegacy/issues/8
+                ( (cd /tmp/XC3 || exit; tar cf - usr) | gzip -c > Xcode3llvmgcc42.tar.gz) && echo "*** Created Xcode3llvmgcc42.tar.gz in directory $(pwd)"
             fi
             
             rm -rf /tmp/XC3
@@ -373,7 +374,7 @@ EOF
             if [ "$osx104" = 1 ]; then
                 test -d /tmp/XC3-10.4 && rm -rf /tmp/XC3-10.4
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.4.Universal.pkg" /tmp/XC3-10.4
-                (cd /tmp/XC3-10.4 || exit; gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.4u.sdk)
+                (cd /tmp/XC3-10.4 || exit; gzip -dc Payload | cpio -id --quiet SDKs/MacOSX10.4u.sdk)
                 SDKROOT=/tmp/XC3-10.4/SDKs/MacOSX10.4u.sdk
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.4u.sdk -mmacosx-version-min=10.4" works
@@ -394,14 +395,14 @@ EOF
                 ln -s 4.0.1 $SDKROOT/usr/lib/powerpc-apple-darwin10/4.2.1
                 ln -s 4.0.0 $SDKROOT/usr/include/c++/4.2.1
 
-                ( (cd /tmp/XC3-10.4 || exit; tar cf - SDKs/MacOSX10.4u.sdk) |gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory $(pwd)"
+                ( (cd /tmp/XC3-10.4 || exit; tar cf - SDKs/MacOSX10.4u.sdk) | gzip -c > Xcode104SDK.tar.gz) && echo "*** Created Xcode104SDK.tar.gz in directory $(pwd)"
                 rm -rf /tmp/XC3-10.4
             fi
             
             if [ "$osx105" = 1 ]; then
                 test -d /tmp/XC3-10.5 && rm -rf /tmp/XC3-10.5
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.5.pkg" /tmp/XC3-10.5
-                (cd /tmp/XC3-10.5 || exit; gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.5.sdk)
+                (cd /tmp/XC3-10.5 || exit; gzip -dc Payload | cpio -id --quiet SDKs/MacOSX10.5.sdk)
                 SDKROOT=/tmp/XC3-10.5/SDKs/MacOSX10.5.sdk
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "g++-4.0 -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5" works
@@ -428,7 +429,7 @@ EOF
             if [ $osx105 = 1 ] || [ $osx106 = 1 ]; then
                 test -d /tmp/XC3 && rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.6.pkg" /tmp/XC3
-                (cd /tmp/XC3 || exit; gzip -dc Payload  |cpio -id --quiet SDKs/MacOSX10.6.sdk)
+                (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet SDKs/MacOSX10.6.sdk)
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6" works
                 ln -s libstdc++.6.dylib /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libstdc++.dylib
@@ -441,10 +442,10 @@ EOF
                     cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
                     cp /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
 
-                    ( (cd /tmp/XC3-10.5 || exit; tar cf - SDKs/MacOSX10.5.sdk) |gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory $(pwd)"
+                    ( (cd /tmp/XC3-10.5 || exit; tar cf - SDKs/MacOSX10.5.sdk) | gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory $(pwd)"
                 fi
                 if [ "$osx106" = 1 ]; then
-                    ( (cd /tmp/XC3 || exit; tar cf - SDKs/MacOSX10.6.sdk) |gzip -c > Xcode106SDK.tar.gz) && echo "*** Created Xcode106SDK.tar.gz in directory $(pwd)"
+                    ( (cd /tmp/XC3 || exit; tar cf - SDKs/MacOSX10.6.sdk) | gzip -c > Xcode106SDK.tar.gz) && echo "*** Created Xcode106SDK.tar.gz in directory $(pwd)"
                 fi
                 rm -rf /tmp/XC3-10.5 /tmp/XC3
             fi
@@ -460,11 +461,11 @@ EOF
                 exit
             fi
             if [ "$osx107" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.7.sdk) |gzip -c > Xcode107SDK.tar.gz) && echo "*** Created Xcode107SDK.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.7.sdk) | gzip -c > Xcode107SDK.tar.gz) && echo "*** Created Xcode107SDK.tar.gz in directory $(pwd)"
             fi
             if [ "$compilers" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins" || exit; tar cf - "GCC 4.2.xcplugin") |gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "*** Created XcodePluginGCC42-Xcode4.tar.gz in directory $(pwd)"
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins" || exit; tar cf - "LLVM GCC 4.2.xcplugin") |gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins" || exit; tar cf - "GCC 4.2.xcplugin") | gzip -c > XcodePluginGCC42-Xcode4.tar.gz) && echo "*** Created XcodePluginGCC42-Xcode4.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins" || exit; tar cf - "LLVM GCC 4.2.xcplugin") | gzip -c > XcodePluginLLVMGCC42.tar.gz) && echo "*** Created XcodePluginLLVMGCC42.tar.gz in directory $(pwd)"
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
@@ -478,7 +479,7 @@ EOF
                 exit
             fi
             if [ "$osx108" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.8.sdk) |gzip -c > Xcode108SDK.tar.gz) && echo "*** Created Xcode108SDK.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.8.sdk) | gzip -c > Xcode108SDK.tar.gz) && echo "*** Created Xcode108SDK.tar.gz in directory $(pwd)"
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
@@ -492,10 +493,10 @@ EOF
                 exit
             fi
             if [ "$osx109" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.9.sdk) |gzip -c > Xcode109SDK.tar.gz) && echo "*** Created Xcode109SDK.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.9.sdk) | gzip -c > Xcode109SDK.tar.gz) && echo "*** Created Xcode109SDK.tar.gz in directory $(pwd)"
             fi
             if [ "$osx1010" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.10.sdk) |gzip -c > Xcode1010SDK.tar.gz) && echo "*** Created Xcode1010SDK.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.10.sdk) | gzip -c > Xcode1010SDK.tar.gz) && echo "*** Created Xcode1010SDK.tar.gz in directory $(pwd)"
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
@@ -508,7 +509,7 @@ EOF
                 exit
             fi
             if [ "$osx1011" = 1 ]; then
-                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.11.sdk) |gzip -c > Xcode1011SDK.tar.gz) && echo "*** Created Xcode1011SDK.tar.gz in directory $(pwd)"
+                ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.11.sdk) | gzip -c > Xcode1011SDK.tar.gz) && echo "*** Created Xcode1011SDK.tar.gz in directory $(pwd)"
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
@@ -520,7 +521,8 @@ EOF
         # PHASE 2: INSTALLING
         #
         if [ ! -w / ]; then
-            echo "*** The install phase requires administrative rights. Please run it as \"sudo $0 install\""
+            echo "*** Error: The install phase requires administrative rights. Please run it as:"
+            echo " $ sudo $0 install"
             exit 1
         fi
         if [ ! -d "$PLUGINDIR" ]; then
@@ -951,7 +953,7 @@ SPEC_EOF
                 fi
             fi
             
-            echo "*** Create symbolic links to compliers in $GCCDIR and $GCCLINKDIR:"
+            echo "*** Creating symbolic links to compliers in $GCCDIR and $GCCLINKDIR:"
             if [ ! -d "$GCCDIR"/usr/bin ]; then
                 mkdir -p "$GCCDIR"/usr/bin
             fi
@@ -1000,8 +1002,8 @@ SPEC_EOF
 
         if [ ! -L /Developer/SDKs ]; then
             echo "*** Warning: /Developer/SDKs should be a symlink to $SDKDIR/SDKs"
-            echo "check that /Developer exists, and fix /Developer/SDKs with:"
-            echo "sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
+            echo "Check that /Developer exists, and fix /Developer/SDKs with:"
+            echo " $ sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
         fi
         ;;
 
@@ -1046,7 +1048,8 @@ SPEC_EOF
         # PHASE 4: UNINSTALLING
         #
         if [ ! -w / ]; then
-            echo "*** The uninstall phase requires requires administrative rights. Please run it as \"sudo $0 uninstall\""
+            echo "*** Error: The uninstall phase requires administrative rights. Please run it as:"
+            echo " $ sudo $0 uninstall"
             exit 1
         fi
 
