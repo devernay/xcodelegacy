@@ -743,7 +743,7 @@ fi
 LD_RESULT=255
 if [ "\$USE_OLD_LD" -eq '1' ]; then
         ARGS=()
-	# strip the -dependency_info xxx, -object_path_lto xxx, -no_deduplicate flags
+        # strip the -dependency_info xxx, -object_path_lto xxx, -no_deduplicate, -export_dynamic flags
         DEPINFO_FOUND=0
         OBJECT_PATH_LTO_FOUND=0
         for var in "\$@"; do
@@ -760,6 +760,8 @@ if [ "\$USE_OLD_LD" -eq '1' ]; then
                         OBJECT_PATH_LTO_FOUND=1
                         continue
                 elif [ "\$var" = '-no_deduplicate' ]; then
+                        continue
+                elif [ "\$var" = '-export_dynamic' ]; then
                         continue
                 fi
 
