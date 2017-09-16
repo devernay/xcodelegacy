@@ -534,8 +534,8 @@ EOF
                 echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
             else
                 (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.0.xcplugin/legacy" && echo "*** installed XcodePluginGCC40.tar.gz"
-		# Add entries expected by later xcodebuilds.
-		mv "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec" "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original"
+                # Add entries expected by later xcodebuilds.
+                mv "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec" "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original"
                 sed '$ i\
 \		ExecDescription = \"Compile \$\(InputFile\)\"\;\
 \		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
@@ -552,8 +552,8 @@ EOF
                     mv "$PLUGINDIR/GCC 4.2.xcplugin" "$PLUGINDIR/GCC 4.2.xcplugin-original"
                 fi
                 (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginGCC42.tar.gz"
-		# Add entries expected by later xcodebuilds.
-		mv "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original"
+                # Add entries expected by later xcodebuilds.
+                mv "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original"
                 sed '$ i\
 \		ExecDescription = \"Compile \$\(InputFile\)\"\;\
 \		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
@@ -615,10 +615,10 @@ for var in "\$@"
 do
         if [ "\$ARCH_FOUND" -eq '1' ]; then
                 ARCH=\$var
-				break;
+                break
         elif [ "\$var" = '-arch' ]; then
                 ARCH_FOUND=1
-		fi
+        fi
 done
 
 AS_DIR=\`dirname "\$0"\`
@@ -694,37 +694,36 @@ do
                 ARCH_FOUND=2
                 break
         else
-	        case "\$var" in
-		        -mmacosx-version-min=10.[0-6])
-			        MACOSX_DEPLOYMENT_TARGET=\$( echo \$var | sed -e s/-mmacosx-version-min=// )
-				;;
-			-arch)
-			        if [ "\$ARCH_FOUND" -ne '0' ]; then
-				    echo "Warning: ld: multiple -arch flags"
-				fi
-				ARCH_FOUND=1
-				;;
-		esac
+                case "\$var" in
+                        -mmacosx-version-min=10.[0-6])
+                                MACOSX_DEPLOYMENT_TARGET=\$( echo \$var | sed -e s/-mmacosx-version-min=// )
+                                ;;
+                        -arch)
+                                if [ "\$ARCH_FOUND" -ne '0' ]; then
+                                        echo "Warning: ld: multiple -arch flags"
+                                fi
+                                ARCH_FOUND=1
+                                ;;
+                esac
         fi
-	
 done
 
 # use the old (Snow Leopard 10.6) ld only if ppc arch or the target macOS is <= 10.6
 USE_OLD_LD=0
 case "\$ARCH" in
-	ppc*) #ppc ppc7400 ppc970 ppc64
-		USE_OLD_LD=1
-		;;
+        ppc*) #ppc ppc7400 ppc970 ppc64
+                USE_OLD_LD=1
+                ;;
 esac
 
 if [ -n \${MACOSX_DEPLOYMENT_TARGET+x} ]; then
-	# MACOSX_DEPLOYMENT_TARGET can either be set externally as an env variable,
-	# or as an ld option using -mmacosx-version-min=10.x
-	case "\${MACOSX_DEPLOYMENT_TARGET}" in
-		10.[0-6])
-			USE_OLD_LD=1
-			;;
-	esac
+        # MACOSX_DEPLOYMENT_TARGET can either be set externally as an env variable,
+        # or as an ld option using -mmacosx-version-min=10.x
+        case "\${MACOSX_DEPLOYMENT_TARGET}" in
+                10.[0-6])
+                        USE_OLD_LD=1
+                        ;;
+        esac
 fi
 
 #echo "Running ld for \$ARCH ..."
@@ -767,9 +766,9 @@ if [ "\$USE_OLD_LD" -eq '1' ]; then
 
                 ARGS+=("\$var")
         done
-	# the old ld is put in the ppc dir so as not to disturb more recent archs (i386, x86_64)
-	# works with ppc ppc7400 ppc970 ppc64 i386 x86_64
-	LDARCHDIR=ppc
+        # the old ld is put in the ppc dir so as not to disturb more recent archs (i386, x86_64)
+        # works with ppc ppc7400 ppc970 ppc64 i386 x86_64
+        LDARCHDIR=ppc
         if [ -x "\$LD_DIR/../libexec/ld/\$LDARCHDIR/ld" ]; then
                 LD="\$LD_DIR/../libexec/ld/\$LDARCHDIR/ld"
         elif [ -x "\$LD_DIR/../../../libexec/ld/\$LDARCHDIR/ld" ]; then
