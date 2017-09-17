@@ -177,6 +177,9 @@ if [ "$RELEASENUM" -gt 14 ]; then
     # on OSX 10.11 El Capitan, nothing can be installed in /usr because of the Sandbox
     # install in Xcode instead, and put links in /usr/local
     GCCLINKDIR=/usr/local
+elif [ "$RELEASENUM" -lt 10 ]; then
+    echo "*** Error: This script requires Mac OS X 10.6 Snow Leopard or newer."
+    exit 1
 fi
 
 GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/man/man7/gpl.7 usr/share/man/man1/*-4.0.1 usr/share/man/man1/*-4.0.1.1 usr/libexec/gcc/*-apple-darwin10/4.0.1 usr/lib/gcc/*-apple-darwin10/4.0.1 usr/include/gcc/darwin/4.0 usr/bin/*-4.0 usr/bin/*-4.0.1 usr/share/man/man1/*-4.2.1 usr/share/man/man1/*-4.2.1.1 usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1"
@@ -517,7 +520,7 @@ EOF
         #######################
         # PHASE 2: INSTALLING
         #
-        if [ ! -w / ]; then
+        if [ $EUID -ne 0 ]; then
             echo "*** Error: The install phase requires administrative rights. Please run it as:"
             echo " $ sudo $0 install"
             exit 1
@@ -1003,7 +1006,7 @@ SPEC_EOF
             echo "*** modified MacOSX Info.plist"
         fi
 
-        if [ ! -L /Developer/SDKs ]; then
+        if [ ! -L /Developer/SDKs ] && [ $XCODE42 -ne 1 ]; then
             echo "*** Warning: /Developer/SDKs should be a symlink to $SDKDIR/SDKs"
             echo "Check that /Developer exists, and fix /Developer/SDKs with:"
             echo " $ sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
@@ -1050,7 +1053,7 @@ SPEC_EOF
         #######################
         # PHASE 4: UNINSTALLING
         #
-        if [ ! -w / ]; then
+        if [ $EUID -ne 0 ]; then
             echo "*** Error: The uninstall phase requires administrative rights. Please run it as:"
             echo " $ sudo $0 uninstall"
             exit 1
