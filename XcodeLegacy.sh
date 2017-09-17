@@ -626,8 +626,10 @@ if [ "\$ARCH_FOUND" -eq '1' ]; then
                 AS="\$AS_DIR/../../../as/\$ARCH/as"
         elif [ -x "\$AS_DIR/../../../../../libexec/as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../../../libexec/as/\$ARCH/as"
+        elif [ -x "\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as" ]; then
+                AS="\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as"
         else
-                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH"
+                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH or \$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH"
                 exit 1
         fi
 
@@ -653,6 +655,8 @@ AS_EOF
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
                 echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
+            elif [ $XCODE42 -eq 1 ]; then
+                echo "*** Not installing Xcode3ld.tar.gz (not required for Xcode <= 4.2.1)"
             else
                 mkdir -p "$GCCDIR/tmp"
                 (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp" || exit; tar xf -))
@@ -793,11 +797,11 @@ LD_EOF
                 echo "*** installed Xcode3ld.tar.gz"
             fi
 
-            if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
-                echo "*** Not modifying MacOSX Architectures.xcspec (found original at $SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
+            if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+                echo "*** Not modifying MacOSX Architectures.xcspec (found original at $PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
             else
-                mv "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
-                { awk 'NR>1{print l}{l=$0}' "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+                mv "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
+                { awk 'NR>1{print l}{l=$0}' "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
         {
                 Type = Architecture;
                 Identifier = ppc;
@@ -991,11 +995,11 @@ SPEC_EOF
 
         # Xcode >= 7.3 disables support for older SDKs in /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Info.plist
         # see https://github.com/devernay/xcodelegacy/issues/23
-        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ]; then
-            echo "*** Not modifying MacOSX Info.plist (found original at $GCCDIR/Platforms/MacOSX.platform/Info.plist-original, uninstall first to force install)"
-        elif [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist" ]; then
-            mv "$GCCDIR/Platforms/MacOSX.platform/Info.plist" "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original"
-            sed -e '/MinimumSDKVersion/{N;d;}' < "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" > "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+        if [ -f "$PLATFORMDIR/Info.plist-original" ]; then
+            echo "*** Not modifying MacOSX Info.plist (found original at $PLATFORMDIR/Info.plist-original, uninstall first to force install)"
+        elif [ -f "$PLATFORMDIR/Info.plist" ]; then
+            mv "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
+            sed -e '/MinimumSDKVersion/{N;d;}' < "$PLATFORMDIR/Info.plist-original" > "$PLATFORMDIR/Info.plist"
             echo "*** modified MacOSX Info.plist"
         fi
 
@@ -1105,9 +1109,9 @@ SPEC_EOF
             rmdir "$GCCINSTALLDIR/usr/lib/"{i686-apple-darwin10,powerpc-apple-darwin10}"/4.2.1" "$GCCINSTALLDIR/usr/lib/"{gcc/,}{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/lib/gcc" || :
             rmdir "$GCCINSTALLDIR/usr/libexec/gcc/"{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/libexec/gcc" "$GCCINSTALLDIR/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
             rmdir "$GCCINSTALLDIR/usr/share/man/man7" || :
-            if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
-                rm "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
-                mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+            if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+                rm "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+                mv -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
             fi
         fi
         #for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
@@ -1169,9 +1173,9 @@ SPEC_EOF
                 fi
             done
         fi
-        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ] && [ $(ls -1 "$SDKDIR"/SDKs/MacOSX*.sdk/legacy 2>/dev/null | wc -l) -eq 0 ]; then
-            rm "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
-            mv -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+        if [ -f "$PLATFORMDIR/Info.plist-original" ] && [ $(ls -1 "$SDKDIR"/SDKs/MacOSX*.sdk/legacy 2>/dev/null | wc -l) -eq 0 ]; then
+            rm "$PLATFORMDIR/Info.plist"
+            mv -f "$PLATFORMDIR/Info.plist-original" "$PLATFORMDIR/Info.plist"
         fi
 
         ;;
