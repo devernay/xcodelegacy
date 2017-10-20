@@ -1,7 +1,7 @@
 XcodeLegacy
 ===========
 
-Legacy components for XCode 4-8 (deprecated compilers and Mac OS X SDKs).
+Legacy components for Xcode 4-8 (deprecated compilers and Mac OS X SDKs).
 
 Home page: https://github.com/devernay/xcodelegacy
 
