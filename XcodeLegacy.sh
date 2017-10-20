@@ -146,40 +146,40 @@ if [ $# != 1 ]; then
     exit
 fi
 
-XCODEDIR="/Developer"
-PLUGINDIR="$XCODEDIR/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
-GCCDIR="$XCODEDIR"
-SDKDIR="$XCODEDIR"
-if [ -d "$PLUGINDIR" ]; then
-    echo "*** Info: found Xcode <= 4.2.1"
-else
-    PLUGINDIR="/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
-    if [ ! -d "$PLUGINDIR" ]; then
-        echo "*** Info: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app"
-    fi
-    echo "*** Info: found Xcode >= 4.3"
-    GCCDIR="/Applications/Xcode.app/Contents/Developer"
-    SDKDIR="$GCCDIR/Platforms/MacOSX.platform/Developer"
-fi
-
 if [ "$1" = "installbeta" ] || [ "$1" = "uninstallbeta" ]; then
-    PLUGINDIR="/Applications/Xcode-beta.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
-    if [ ! -d "$PLUGINDIR" ]; then
-        echo "*** Info: could not find Xcode beta in /Applications/Xcode-beta.app"
-    fi
-    echo "*** Info: found Xcode beta"
-    GCCDIR="/Applications/Xcode-beta.app/Contents/Developer"
-    SDKDIR="$GCCDIR/Platforms/MacOSX.platform/Developer"
+    XCODEAPP="/Applications/Xcode-beta.app"
+else
+    XCODEAPP="/Applications/Xcode.app"
 fi
-#SANDBOX=0
+XCODE42=0
+PLUGINDIR="$XCODEAPP/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
+GCCDIR="$XCODEAPP/Contents/Developer"
+SDKDIR="$GCCDIR/Platforms/MacOSX.platform/Developer"
+if [ -d "$XCODEAPP" ]; then
+    echo "*** Info: found Xcode >= 4.3 in $XCODEAPP"
+else
+    GCCDIR="/Developer"
+    XCODEAPP="$GCCDIR/Applications/Xcode.app"
+    PLUGINDIR="$GCCDIR/Library/Xcode/PrivatePlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
+    SDKDIR="$GCCDIR"
+    if [ -d "$XCODEAPP" ]; then
+        XCODE42=1
+        echo "*** Info: found Xcode <= 4.2.1 in $XCODEAPP"
+    else
+        echo "*** Info: could not find Xcode 4.2 in /Developer/Applications nor Xcode >= 4.3 in /Applications"
+    fi
+fi
+PLATFORMDIR="$GCCDIR/Platforms/MacOSX.platform"
 GCCINSTALLDIR="$GCCDIR/Toolchains/XcodeDefault.xctoolchain"
 GCCLINKDIR=/usr
 RELEASENUM=$(uname -r | awk -F. '{print $1}')
 if [ "$RELEASENUM" -gt 14 ]; then
     # on OSX 10.11 El Capitan, nothing can be installed in /usr because of the Sandbox
     # install in Xcode instead, and put links in /usr/local
-    #SANDBOX=1
     GCCLINKDIR=/usr/local
+elif [ "$RELEASENUM" -lt 10 ]; then
+    echo "*** Error: This script requires Mac OS X 10.6 Snow Leopard or newer."
+    exit 1
 fi
 
 GCCFILES="usr/share/man/man7/fsf-funding.7 usr/share/man/man7/gfdl.7 usr/share/man/man7/gpl.7 usr/share/man/man1/*-4.0.1 usr/share/man/man1/*-4.0.1.1 usr/libexec/gcc/*-apple-darwin10/4.0.1 usr/lib/gcc/*-apple-darwin10/4.0.1 usr/include/gcc/darwin/4.0 usr/bin/*-4.0 usr/bin/*-4.0.1 usr/share/man/man1/*-4.2.1 usr/share/man/man1/*-4.2.1.1 usr/libexec/gcc/*-apple-darwin10/4.2.1 usr/lib/gcc/*-apple-darwin10/4.2.1 usr/include/gcc/darwin/4.2 usr/bin/*-4.2 usr/bin/*-4.2.1"
@@ -520,13 +520,13 @@ EOF
         #######################
         # PHASE 2: INSTALLING
         #
-        if [ ! -w / ]; then
+        if [ $EUID -ne 0 ]; then
             echo "*** Error: The install phase requires administrative rights. Please run it as:"
             echo " $ sudo $0 install"
             exit 1
         fi
         if [ ! -d "$PLUGINDIR" ]; then
-            echo "*** Error: could not find Xcode 4.2 in /Developer nor Xcode 4.3 in /Applications/Xcode.app, cannot install"
+            echo "*** Error: could not find Xcode 4.2 in /Developer/Applications nor Xcode >= 4.3 in /Applications, cannot install"
             exit 1
         fi
         if [ "$compilers" = 1 ]; then
@@ -572,18 +572,19 @@ EOF
                 echo "*** Not installing Xcode3as.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/as, uninstall first to force install)"
             else
                 (gzip -dc Xcode3as.tar.gz | (cd "$GCCDIR" || exit; tar xf -))
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/i386"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/x86_64"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc/as"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64/as"
+                mkdir -p "$GCCINSTALLDIR/usr/bin"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/as/ppc"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/as/ppc64"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/as/i386"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/as/x86_64"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCINSTALLDIR/usr/libexec/as/ppc/as"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCINSTALLDIR/usr/libexec/as/ppc64/as"
                 # Xcodes >= 4 already include an acceptable GNU legacy assembler
-                # (v1.38) for i386 and x86_64 in $GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as.
+                # (v1.38) for i386 and x86_64 in $GCCINSTALLDIR/usr/libexec/as.
                 # When they no longer do, enable these links (conditionally,
                 # of course).
-                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/i386/as"
-                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/x86_64/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/x86_64/as"
+                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/as" "$GCCINSTALLDIR/usr/libexec/as/i386/as"
+                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/x86_64/as" "$GCCINSTALLDIR/usr/libexec/as/x86_64/as"
 
                 # Replace Xcode's modern toolchain assembler with a script
                 # that auto-selects the proper legacy assembler based on the
@@ -593,8 +594,8 @@ EOF
                 # by Xcode 7+ assemblers.
                 # First, though, don't overwrite the original assembler if
                 # XcodeLegacy is installed twice.
-                if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" ]; then
-                    mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original"
+                if [ -f "$GCCINSTALLDIR/usr/bin/as" ] && [ ! -f "$GCCINSTALLDIR/usr/bin/as-original" ]; then
+                    mv "$GCCINSTALLDIR/usr/bin/as" "$GCCINSTALLDIR/usr/bin/as-original"
                 fi
                 # NB: While only gcc uses the assembler in our builds (it pipes the
                 # output of usr/libexec/gcc/*-apple-darwin10/4.*/ccobj1plus into
@@ -606,7 +607,7 @@ EOF
                 # the toolchain's usr/bin/as wants to use Xcode 3's assembler.
                 # NB: AS_DIR resolves as the directory of the (source) link that
                 # invoked the script.
-                cat <<AS_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/as
+                cat <<AS_EOF >> "$GCCINSTALLDIR"/usr/bin/as
 #!/bin/bash
 
 ARCH=''
@@ -628,8 +629,10 @@ if [ "\$ARCH_FOUND" -eq '1' ]; then
                 AS="\$AS_DIR/../../../as/\$ARCH/as"
         elif [ -x "\$AS_DIR/../../../../../libexec/as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../../../libexec/as/\$ARCH/as"
+        elif [ -x "\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as" ]; then
+                AS="\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as"
         else
-                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH"
+                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH or \$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH"
                 exit 1
         fi
 
@@ -649,40 +652,42 @@ fi
 
 exit \$AS_RESULT
 AS_EOF
-                chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
+                chmod +x "$GCCINSTALLDIR/usr/bin/as"
                 echo "*** installed Xcode3as.tar.gz"
             fi
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
                 echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
+            elif [ $XCODE42 -eq 1 ]; then
+                echo "*** Not installing Xcode3ld.tar.gz (not required for Xcode <= 4.2.1)"
             else
                 mkdir -p "$GCCDIR/tmp"
                 (gzip -dc Xcode3ld.tar.gz | (cd "$GCCDIR/tmp" || exit; tar xf -))
                 cp "$GCCDIR/tmp/usr/bin/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc/"
                 ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld"
                 rm -rf "$GCCDIR/tmp"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970"
-                mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc/ld"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400/ld"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970/ld"
-                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64/ld"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/ld/ppc"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/ld/ppc7400"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/ld/ppc970"
+                mkdir -p "$GCCINSTALLDIR/usr/libexec/ld/ppc64"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCINSTALLDIR/usr/libexec/ld/ppc/ld"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCINSTALLDIR/usr/libexec/ld/ppc7400/ld"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCINSTALLDIR/usr/libexec/ld/ppc970/ld"
+                ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/ld" "$GCCINSTALLDIR/usr/libexec/ld/ppc64/ld"
                 # Xcode 8's ld fails to link i386 and x86_64 for OSX 10.5: https://github.com/devernay/xcodelegacy/issues/30
                 # Since this ld is from Xcode 3.2.6 for OSX 10.6, this should be OK if the target OS is < 10.6
                 # (which is checked by the stub ld script)
                 for arch in i386 x86_64; do
                     mkdir -p "$GCCDIR/usr/libexec/gcc/darwin/$arch"
                     ln "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" "$GCCDIR/usr/libexec/gcc/darwin/$arch/ld"
-                    mkdir -p "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/$arch"
-                    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/$arch/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/$arch/ld"
+                    mkdir -p "$GCCINSTALLDIR/usr/libexec/ld/$arch"
+                    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/$arch/ld" "$GCCINSTALLDIR/usr/libexec/ld/$arch/ld"
                 done
                 # prevent overwriting the original ld if the script is run twice
-                if [ ! -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
-                    mv "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original"
+                if [ ! -f "$GCCINSTALLDIR/usr/bin/ld-original" ]; then
+                    mv "$GCCINSTALLDIR/usr/bin/ld" "$GCCINSTALLDIR/usr/bin/ld-original"
                 fi
-                cat <<LD_EOF >> "$GCCDIR"/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
+                cat <<LD_EOF >> "$GCCINSTALLDIR"/usr/bin/ld
 #!/bin/bash
 
 ARCH=''
@@ -791,15 +796,15 @@ fi
 
 exit \$LD_RESULT
 LD_EOF
-                chmod +x "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+                chmod +x "$GCCINSTALLDIR/usr/bin/ld"
                 echo "*** installed Xcode3ld.tar.gz"
             fi
 
-            if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
-                echo "*** Not modifying MacOSX Architectures.xcspec (found original at $SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
+            if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+                echo "*** Not modifying MacOSX Architectures.xcspec (found original at $PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
             else
-                mv "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
-                { awk 'NR>1{print l}{l=$0}' "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+                mv "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
+                { awk 'NR>1{print l}{l=$0}' "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
         {
                 Type = Architecture;
                 Identifier = ppc;
@@ -993,15 +998,15 @@ SPEC_EOF
 
         # Xcode >= 7.3 disables support for older SDKs in /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Info.plist
         # see https://github.com/devernay/xcodelegacy/issues/23
-        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ]; then
-            echo "*** Not modifying MacOSX Info.plist (found original at $GCCDIR/Platforms/MacOSX.platform/Info.plist-original, uninstall first to force install)"
-        elif [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist" ]; then
-            mv "$GCCDIR/Platforms/MacOSX.platform/Info.plist" "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original"
-            sed -e '/MinimumSDKVersion/{N;d;}' < "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" > "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+        if [ -f "$PLATFORMDIR/Info.plist-original" ]; then
+            echo "*** Not modifying MacOSX Info.plist (found original at $PLATFORMDIR/Info.plist-original, uninstall first to force install)"
+        elif [ -f "$PLATFORMDIR/Info.plist" ]; then
+            mv "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
+            sed -e '/MinimumSDKVersion/{N;d;}' < "$PLATFORMDIR/Info.plist-original" > "$PLATFORMDIR/Info.plist"
             echo "*** modified MacOSX Info.plist"
         fi
 
-        if [ ! -L /Developer/SDKs ]; then
+        if [ ! -L /Developer/SDKs ] && [ $XCODE42 -ne 1 ]; then
             echo "*** Warning: /Developer/SDKs should be a symlink to $SDKDIR/SDKs"
             echo "Check that /Developer exists, and fix /Developer/SDKs with:"
             echo " $ sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
@@ -1048,7 +1053,7 @@ SPEC_EOF
         #######################
         # PHASE 4: UNINSTALLING
         #
-        if [ ! -w / ]; then
+        if [ $EUID -ne 0 ]; then
             echo "*** Error: The uninstall phase requires administrative rights. Please run it as:"
             echo " $ sudo $0 uninstall"
             exit 1
@@ -1071,25 +1076,25 @@ SPEC_EOF
                          "$GCCDIR/usr/libexec/gcc/darwin/ppc64" \
                          "$GCCDIR/usr/libexec/gcc/darwin/i386" \
                          "$GCCDIR/usr/libexec/gcc/darwin/x86_64" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/as/ppc64" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc7400" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc970" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/ppc64" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/i386" \
-                         "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/libexec/ld/x86_64"; do
+                         "$GCCINSTALLDIR/usr/libexec/as/ppc" \
+                         "$GCCINSTALLDIR/usr/libexec/as/ppc64" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/ppc" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/ppc7400" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/ppc970" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/ppc64" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/i386" \
+                         "$GCCINSTALLDIR/usr/libexec/ld/x86_64"; do
                     if [ -e "$f" ]; then
                             rm -rf "$f"
                     fi
             done
-            if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" ]; then
-                rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
-                mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/as"
+            if [ -f "$GCCINSTALLDIR/usr/bin/as-original" ]; then
+                rm "$GCCINSTALLDIR/usr/bin/as"
+                mv -f "$GCCINSTALLDIR/usr/bin/as-original" "$GCCINSTALLDIR/usr/bin/as"
             fi
-            if [ -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" ]; then
-                rm "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
-                mv -f "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld-original" "$GCCDIR/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld"
+            if [ -f "$GCCINSTALLDIR/usr/bin/ld-original" ]; then
+                rm "$GCCINSTALLDIR/usr/bin/ld"
+                mv -f "$GCCINSTALLDIR/usr/bin/ld-original" "$GCCINSTALLDIR/usr/bin/ld"
             fi
             # preserve original LLVM-GCC on Xcode 4 and earlier
             if [ ! -d "$GCCDIR/Library/Perl" ] || [ -d "$GCCDIR/Library/Perl/5.10" ]; then
@@ -1107,9 +1112,9 @@ SPEC_EOF
             rmdir "$GCCINSTALLDIR/usr/lib/"{i686-apple-darwin10,powerpc-apple-darwin10}"/4.2.1" "$GCCINSTALLDIR/usr/lib/"{gcc/,}{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/lib/gcc" || :
             rmdir "$GCCINSTALLDIR/usr/libexec/gcc/"{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/libexec/gcc" "$GCCINSTALLDIR/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
             rmdir "$GCCINSTALLDIR/usr/share/man/man7" || :
-            if [ -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
-                rm "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
-                mv -f "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$SDKDIR/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+            if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
+                rm "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
+                mv -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
             fi
         fi
         #for i in 10.4u 10.5 10.6 10.7 10.8 10.9 10.10; do
@@ -1171,9 +1176,9 @@ SPEC_EOF
                 fi
             done
         fi
-        if [ -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" ] && [ $(ls -1 "$SDKDIR"/SDKs/MacOSX*.sdk/legacy 2>/dev/null | wc -l) -eq 0 ]; then
-            rm "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
-            mv -f "$GCCDIR/Platforms/MacOSX.platform/Info.plist-original" "$GCCDIR/Platforms/MacOSX.platform/Info.plist"
+        if [ -f "$PLATFORMDIR/Info.plist-original" ] && [ $(ls -1 "$SDKDIR"/SDKs/MacOSX*.sdk/legacy 2>/dev/null | wc -l) -eq 0 ]; then
+            rm "$PLATFORMDIR/Info.plist"
+            mv -f "$PLATFORMDIR/Info.plist-original" "$PLATFORMDIR/Info.plist"
         fi
 
         ;;
