@@ -38,6 +38,7 @@ osx1010=0
 osx1011=0
 gotoption=0
 error=0
+hashTable=hashtable-gcc-4.0.4
 
 while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
 
@@ -252,6 +253,28 @@ case $1 in
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
+
+        if [ "$osx104" = 1 ]; then
+            echo "Checking if $hashTable is installed"
+            if ! which $hashTable; then
+                echo "*** Need to install $hashTable or higher, e.g.:"
+                echo ""
+                echo "  curl -A 'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6' 'https://gcc.gnu.org/viewcvs/gcc/branches/gcc-4_0-branch/libstdc%2B%2B-v3/include/tr1/hashtable?revision=104939&view=co' -o hashtable-gcc-4.0.4"
+                echo "  chmod +x hashtable-gcc-4.0.4"
+                echo "  mv hashtable-gcc-4.0.4 /usr/local/bin"
+                echo ""
+                exit
+            fi
+            hashTableFullPath=`which $hashTable`
+        fi
+        
+        if [ "$xc8" = 1 ]; then
+            if [ -e Xcode.app ]; then
+                echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
+                exit
+            fi
+        fi
+
         MNTDIR="$(mktemp -d mount.XXX)"
         ATTACH_OPTS=(-nobrowse -mountroot "$MNTDIR")
         if [ "$xc3" = 1 ]; then
@@ -386,7 +409,7 @@ EOF
                 # in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
                 #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
                 mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
-                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
+                cp "$hashTableFullPath" $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
 
                 # Add links for compatibility with GCC 4.2
                 ln -s 4.0.1 $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.2.1
@@ -418,7 +441,7 @@ EOF
                 # this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
                 #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
                 mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
-                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
+                cp "$hashTableFullPath" $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
             fi
 
             if [ "$osx104" = 1 ] || [ "$osx105" = 1 ]; then
