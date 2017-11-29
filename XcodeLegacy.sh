@@ -430,9 +430,13 @@ EOF
                 test -d /tmp/XC3 && rm -rf /tmp/XC3
                 pkgutil --expand "$MNTDIR/Xcode and iOS SDK/Packages/MacOSX10.6.pkg" /tmp/XC3
                 (cd /tmp/XC3 || exit; gzip -dc Payload | cpio -id --quiet SDKs/MacOSX10.6.sdk)
+                SDKROOT=/tmp/XC3/SDKs/MacOSX10.6.sdk
                 # should we install more than these? (fixed includes?)
                 # Add links to libstdc++ so that "clang++ -stdlib=libstdc++ -isysroot /Developer/SDKs/MacOSX10.6.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6" works
-                ln -s libstdc++.6.dylib /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libstdc++.dylib
+                ln -s libstdc++.6.dylib $SDKROOT/usr/lib/libstdc++.dylib
+
+                # fix buggy hashtable include (see above for explanations)
+                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
 
                 if [ "$osx105" = 1 ]; then
                     # we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
@@ -440,7 +444,7 @@ EOF
                     # int main() { __uint128_t a = 100; __uint128_t b = 200; __uint128_t c = a / b; return 0; }
                     # with clang -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 conftest1.c
                     cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
-                    cp /tmp/XC3/SDKs/MacOSX10.6.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
+                    cp $SDKROOT/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
 
                     ( (cd /tmp/XC3-10.5 || exit; tar cf - SDKs/MacOSX10.5.sdk) | gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory $(pwd)"
                 fi
