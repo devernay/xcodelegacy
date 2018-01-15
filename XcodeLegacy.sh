@@ -643,10 +643,16 @@ if [ "\$ARCH_FOUND" -eq '1' ]; then
         \`\$AS "\$@"\`
         AS_RESULT=\$?
 else
-        if [ -x "\$AS_DIR/../../../../bin/as-original" ]; then
+        if [ -x "\$AS_DIR/as-original" ]; then
+                ASORIGINAL="\$AS_DIR/as-original"
+        elif [ -x "\$AS_DIR/../../../bin/as-original" ]; then
+                ASORIGINAL="\$AS_DIR/../../../bin/as-original"
+        elif [ -x "\$AS_DIR/../../../../bin/as-original" ]; then
                 ASORIGINAL="\$AS_DIR/../../../../bin/as-original"
+        elif [ -x "\$AS_DIR/../../../../../bin/as-original" ]; then
+                ASORIGINAL="\$AS_DIR/../../../../../bin/as-original"
         else
-                echo "Error: cannot find as-original in \$AS_DIR/../../../../bin/as-original"
+                echo "Error: cannot find as-original in \$AS_DIR/as-original or \$AS_DIR/../../../bin/as-original or \$AS_DIR/../../../../bin/as-original or \$AS_DIR/../../../../../bin/as-original"
                 exit 1
         fi
 
