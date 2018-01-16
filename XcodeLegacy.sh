@@ -611,39 +611,54 @@ EOF
                 # the toolchain's usr/bin/as wants to use Xcode 3's assembler.
                 # NB: AS_DIR resolves as the directory of the (source) link that
                 # invoked the script.
+
+                # Note that we don't look for AS in $AS_DIR/../libexec/as/\$ARCH/as
+                # because gprbuild (from GNU Ada) calls as with both -m and -arch
+                # flags, and the arch-specific as doesn'b understand -m32 or -m64.
+                # We just look for as in a few places, and if it's not there, we
+                # look for as-original, starting in the current dir.
+                # In any case, we prune -m32 and -m64 from the as args.
+                # see https://github.com/devernay/xcodelegacy/issues/33
                 cat <<AS_EOF >> "$GCCINSTALLDIR"/usr/bin/as
 #!/bin/bash
 
 ARCH=''
 ARCH_FOUND=0
+AS_ARGS=()
 for var in "\$@"
 do
         if [ "\$ARCH_FOUND" -eq '1' ]; then
                 ARCH=\$var
+                AS_ARGS+=("\$var")
                 break
         elif [ "\$var" = '-arch' ]; then
                 ARCH_FOUND=1
+                AS_ARGS+=("\$var")
+        elif [ "\$var" = '-m32' ]; then
+                true
+        elif [ "\$var" = '-m64' ]; then
+                true
+        else
+                AS_ARGS+=("\$var")
         fi
 done
 
 AS_DIR=\`dirname "\$0"\`
-AS_RESULT=255
+AS_FOUND=0
 if [ "\$ARCH_FOUND" -eq '1' ]; then
-        if [ -x "\$AS_DIR/../libexec/as/\$ARCH/as" ]; then
-                AS="\$AS_DIR/../libexec/as/\$ARCH/as"
-        elif [ -x "\$AS_DIR/../../../as/\$ARCH/as" ]; then
+        if [ -x "\$AS_DIR/../../../as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../as/\$ARCH/as"
+                AS_FOUND=1
         elif [ -x "\$AS_DIR/../../../../../libexec/as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../../../libexec/as/\$ARCH/as"
+                AS_FOUND=1
         elif [ -x "\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as" ]; then
                 AS="\$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH/as"
-        else
-                echo "Error: cannot find as for \$ARCH in \$AS_DIR/../libexec/as/\$ARCH or \$AS_DIR/../../../as/\$ARCH or \$AS_DIR/../../../../../libexec/as/\$ARCH or \$AS_DIR/../../../../../../../usr/libexec/as/\$ARCH"
-                exit 1
+                AS_FOUND=1
         fi
-
-        \`\$AS "\$@"\`
-        AS_RESULT=\$?
+fi
+if [ "\$AS_FOUND" -eq '1' ]; then
+        exec \$AS "\${AR_ARGS[@]}"
 else
         if [ -x "\$AS_DIR/as-original" ]; then
                 ASORIGINAL="\$AS_DIR/as-original"
@@ -658,11 +673,8 @@ else
                 exit 1
         fi
 
-        \`\$ASORIGINAL "\$@"\`
-        AS_RESULT=\$?
+        exec \$ASORIGINAL "\$@"
 fi
-
-exit \$AS_RESULT
 AS_EOF
                 chmod +x "$GCCINSTALLDIR/usr/bin/as"
                 echo "*** installed Xcode3as.tar.gz"
