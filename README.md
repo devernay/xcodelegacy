@@ -17,7 +17,7 @@ I made the script XcodeLegacy.sh to extract these components (the links work if 
 - PPC assembler
 - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11
 
-The script also fixes a few known bugs in the 10.4 and 10.5 SDK.
+The script also fixes a few known bugs in the 10.4, 10.5 and 10.6 SDK.
 
 Note: There may be similar tips to compile for older iOS (not Mac OS X) versions, but I don't develop for iOS. However, if you want to enhace the XcodeLegacy script to also include those components, I'll gladly integrate your modifications.
 
@@ -50,6 +50,7 @@ Optionally, one of the following options can be passed as the *first* argument t
 * `-osx109` : only install OSX 10.9 SDK
 * `-osx1010` : only install OSX 10.10 SDK
 * `-osx1011` : only install OSX 10.11 SDK
+* `-osx1012` : only install OSX 10.12 SDK
 
 
 Using the older SDKs
