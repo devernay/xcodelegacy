@@ -203,7 +203,7 @@ xc7="$(( osx1011 != 0 ))"
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
     macos="$1"
-    macos_nodot="${macos//./}"
+    macosnodot="${macos//./}"
     if [ -d "$SDKDIR/SDKs/MacOSX${macos}.sdk" ]; then
         echo "*** Not installing MacOSX${macos}.sdk (found installed in $SDKDIR/SDKs/MacOSX${macos}.sdk, uninstall first to force install)"
     else
