@@ -36,6 +36,7 @@ osx108=0
 osx109=0
 osx1010=0
 osx1011=0
+osx1012=0
 gotoption=0
 error=0
 
@@ -87,6 +88,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+        -osx1012)
+            osx1012=1
+            gotoption=1
+            shift
+            ;;
         *)
             # unknown option or spurious arg
             error=1
@@ -105,11 +111,12 @@ if [ $gotoption = 0 ]; then
     osx109=1
     osx1010=1
     osx1011=1
+    osx1012=1
 fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
     echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1, which"
@@ -131,6 +138,7 @@ if [ $# != 1 ]; then
     echo " -osx109    : only install OSX 10.9 SDK"
     echo " -osx1010   : only install OSX 10.10 SDK"
     echo " -osx1011   : only install OSX 10.11 SDK"
+    echo " -osx1012   : only install OSX 10.12 SDK"
     echo "Note that these can be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one could execute:"
     echo " $ $0 -osx109 -osx1010 buildpackages"
@@ -190,6 +198,28 @@ xc4="$(( compilers + osx107 != 0 ))"
 xc5="$(( osx108 != 0 ))"
 xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
+
+# The sole argument is the macOS version (e.g. 10.12)
+installSDK() {
+    macos="$1"
+    macos_nodot="${macos//./}"
+    if [ -d "$SDKDIR/SDKs/MacOSX${macos}.sdk" ]; then
+        echo "*** Not installing MacOSX${macos}.sdk (found installed in $SDKDIR/SDKs/MacOSX${macos}.sdk, uninstall first to force install)"
+    else
+        if [ -f Xcode${macosnodot}SDK.tar.gz ]; then
+            (gzip -dc Xcode${macosnodot}SDK.tar.gz | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode${macosnodot}SDK.tar.gz"
+        elif [ -f MacOSX${macos}.sdk.tar.xz ]; then
+            (gzip -dc MacOSX${macos}.sdk.tar.xz | (cd "$SDKDIR/SDKs" || exit; tar xf -)) && echo "*** installed MacOSX${macos}.sdk.tar.xz"
+        else
+            echo "*** Could not install MacOSX${macos}.sdk"
+            echo "*** Before installing, either:"
+            echo "- execute \"$0 buildpackages\""
+            echo "- download MacOSX${macos}.sdk.tar.xz from https://github.com/phracker/MacOSX-SDKs/releases and relaunch \"$0 install\""
+            exit 1
+        fi
+        touch "$SDKDIR/SDKs/MacOSX${macos}.sdk/legacy"
+    fi
+}
 
 case $1 in
     buildpackages)
@@ -516,6 +546,9 @@ EOF
                 ( (cd "$MNTDIR/Xcode/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; tar cf - SDKs/MacOSX10.11.sdk) | gzip -c > Xcode1011SDK.tar.gz) && echo "*** Created Xcode1011SDK.tar.gz in directory $(pwd)"
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
+        fi
+        if [ "$osx1012" = 1 ]; then
+            curl -L -O https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.12.sdk.tar.xz
         fi
         rmdir "$MNTDIR"
         ;;
@@ -901,48 +934,27 @@ SPEC_EOF
         fi
 
         if [ "$osx107" = 1 ]; then
-            if [ -d "$SDKDIR/SDKs/MacOSX10.7.sdk" ]; then
-                echo "*** Not installing Xcode107SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.7.sdk, uninstall first to force install)"
-            else
-                (gzip -dc Xcode107SDK.tar.gz | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode107SDK.tar.gz"
-                touch "$SDKDIR/SDKs/MacOSX10.7.sdk/legacy"
-            fi
+            installSDK 10.7
         fi
 
         if [ "$osx108" = 1 ]; then
-            if [ -d "$SDKDIR/SDKs/MacOSX10.8.sdk" ]; then
-                echo "*** Not installing Xcode108SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.8.sdk, uninstall first to force install)"
-            else
-                (gzip -dc Xcode108SDK.tar.gz | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode108SDK.tar.gz"
-                touch "$SDKDIR/SDKs/MacOSX10.8.sdk/legacy"
-            fi
+            installSDK 10.8
         fi
 
         if [ "$osx109" = 1 ]; then
-            if [ -d "$SDKDIR/SDKs/MacOSX10.9.sdk" ]; then
-                echo "*** Not installing Xcode109SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.9.sdk, uninstall first to force install)"
-            else
-                (gzip -dc Xcode109SDK.tar.gz | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode109SDK.tar.gz"
-                touch "$SDKDIR/SDKs/MacOSX10.9.sdk/legacy"
-            fi
+            installSDK 10.9
         fi
 
         if [ "$osx1010" = 1 ]; then
-            if [ -d "$SDKDIR/SDKs/MacOSX10.10.sdk" ]; then
-                echo "*** Not installing Xcode1010SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.10.sdk, uninstall first to force install)"
-            else
-                (gzip -dc Xcode1010SDK.tar.gz | (cd "$SDKDIR"; tar xf -)) && echo "*** installed Xcode1010SDK.tar.gz"
-                touch "$SDKDIR/SDKs/MacOSX10.10.sdk/legacy"
-            fi
+            installSDK 10.10
         fi
 
         if [ "$osx1011" = 1 ]; then
-            if [ -d "$SDKDIR/SDKs/MacOSX10.11.sdk" ]; then
-                echo "*** Not installing Xcode1011SDK.tar.gz (found installed in $SDKDIR/SDKs/MacOSX10.11.sdk, uninstall first to force install)"
-            else
-                (gzip -dc Xcode1011SDK.tar.gz | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode1011SDK.tar.gz"
-                touch "$SDKDIR/SDKs/MacOSX10.11.sdk/legacy"
-            fi
+            installSDK 10.11
+        fi
+
+        if [ "$osx1012" = 1 ]; then
+            installSDK 10.12
         fi
 
         if [ "$compilers" = 1 ]; then

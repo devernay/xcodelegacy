@@ -2,6 +2,7 @@
 *.dmg.part
 *.pkg
 *.tar.gz
+*.tar.xz
 
 build
 dgph
