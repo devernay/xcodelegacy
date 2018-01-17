@@ -1083,6 +1083,9 @@ SPEC_EOF
         if [ "$osx1011" = 1 ]; then
             rm Xcode1011SDK.tar.gz 2>/dev/null
         fi
+        if [ "$osx1012" = 1 ]; then
+            rm Xcode1012SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -1185,6 +1188,10 @@ SPEC_EOF
         fi
         if [ "$osx1011" = 1 ]; then
             i=10.11
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+        if [ "$osx1012" = 1 ]; then
+            i=10.12
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
