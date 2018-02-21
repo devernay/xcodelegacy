@@ -661,10 +661,9 @@ ARCH_FOUND=0
 AS_ARGS=()
 for var in "\$@"
 do
-        if [ "\$ARCH_FOUND" -eq '1' ]; then
-                ARCH=\$var
+        if [ -z "\$ARCH" ] && [ "\$ARCH_FOUND" -eq '1' ]; then
+                ARCH="\$var"
                 AS_ARGS+=("\$var")
-                break
         elif [ "\$var" = '-arch' ]; then
                 ARCH_FOUND=1
                 AS_ARGS+=("\$var")
@@ -692,7 +691,7 @@ if [ "\$ARCH_FOUND" -eq '1' ]; then
         fi
 fi
 if [ "\$AS_FOUND" -eq '1' ]; then
-        exec \$AS "\${AR_ARGS[@]}"
+        exec \$AS "\${AS_ARGS[@]}"
 else
         if [ -x "\$AS_DIR/as-original" ]; then
                 ASORIGINAL="\$AS_DIR/as-original"
