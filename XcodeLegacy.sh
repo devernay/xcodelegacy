@@ -1038,7 +1038,7 @@ SPEC_EOF
             echo "*** Not modifying MacOSX Info.plist (found original at $PLATFORMDIR/Info.plist-original, uninstall first to force install)"
         elif [ -f "$PLATFORMDIR/Info.plist" ]; then
             mv "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
-            sed -e '/MinimumSDKVersion/{N;d;}' < "$PLATFORMDIR/Info.plist-original" > "$PLATFORMDIR/Info.plist"
+            plutil -remove MinimumSDKVersion -o "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
             echo "*** modified MacOSX Info.plist"
         fi
 
