@@ -7,6 +7,7 @@
 # - Jae Liu <ling32945@github>
 # - Eric Knibbe <EricFromCanada@github>
 # - Chris Roueche <croueche@github>
+# - Kris Coppieters <zwettemaan@github>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -22,7 +23,7 @@
 # 1.8 (07/04/2016): add options to install only some SDKs or compilers only
 # 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
 # 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
-# 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
+# 2.1KC (26/10/2017): Added support to extract OS X 10.12 from Xcode 8.2.1 for use on Xcode 9/OS X 10.13
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -120,12 +121,12 @@ if [ $# != 1 ]; then
     echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
-    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4 and Xcode 7.3.1, which"
+    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4, Xcode 7.3.1 and Xcode 8.2.1 which"
     echo "are not available in Xcode >= 4.2:"
     echo " - PPC assembler and linker"
     echo " - GCC 4.0 and 4.2 compilers and Xcode plugins"
     echo " - LLVM-GCC 4.2 compiler and Xcode plugin (Xcode >= 5)"
-    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11"
+    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default"
     echo "everything is done):"
@@ -199,6 +200,7 @@ xc4="$(( compilers + osx107 != 0 ))"
 xc5="$(( osx108 != 0 ))"
 xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
+xc8="$(( osx1012 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -213,9 +215,8 @@ installSDK() {
             (gzip -dc MacOSX${macos}.sdk.tar.xz | (cd "$SDKDIR/SDKs" || exit; tar xf -)) && echo "*** installed MacOSX${macos}.sdk.tar.xz"
         else
             echo "*** Could not install MacOSX${macos}.sdk"
-            echo "*** Before installing, either:"
+            echo "*** Before installing:"
             echo "- execute \"$0 buildpackages\""
-            echo "- download MacOSX${macos}.sdk.tar.xz from https://github.com/phracker/MacOSX-SDKs/releases and relaunch \"$0 install\""
             exit 1
         fi
         touch "$SDKDIR/SDKs/MacOSX${macos}.sdk/legacy"
@@ -230,7 +231,7 @@ case $1 in
         missingdmg=0
         # note: Xcode links from http://stackoverflow.com/questions/10335747/how-to-download-xcode-4-5-6-7-and-get-the-dmg-file/10335943#10335943
         if [ "$xc3" = 1 ] && [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
-            echo "*** you should download Xcode 3.2.6. Login to:"
+            echo "*** You should download Xcode 3.2.6. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg"
@@ -240,7 +241,7 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc4" = 1 ] && [ ! -f xcode4630916281a.dmg ]; then
-            echo "*** you should download Xcode 4.6.3. Login to:"
+            echo "*** You should download Xcode 4.6.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
@@ -250,7 +251,7 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
-            echo "*** you should download Xcode 5.1.1. Login to:"
+            echo "*** You should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
@@ -260,7 +261,7 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc6" = 1 ] && [ ! -f Xcode_6.4.dmg ]; then
-            echo "*** you should download Xcode 6.4. Login to:"
+            echo "*** You should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
@@ -270,7 +271,7 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc7" = 1 ] && [ ! -f Xcode_7.3.1.dmg ]; then
-            echo "*** you should download Xcode 7.3.1. Login to:"
+            echo "*** You should download Xcode 7.3.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
@@ -279,10 +280,25 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
+        if [ "$xc8" = 1 ] && [ ! -f Xcode_8.2.1.xip ]; then
+            echo "*** You should download Xcode 8.2.1. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.2.1/Xcode_8.2.1.xip"
+            echo "and then run this script from within the same directory as the downloaded file"
+            missingdmg=1
+        fi
         if [ "$missingdmg" = 1 ]; then
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
+        if [ "$xc8" = 1 ]; then
+            if [ -e Xcode.app ]; then
+                echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
+                exit
+            fi
+        fi
+
         MNTDIR="$(mktemp -d mount.XXX)"
         ATTACH_OPTS=(-nobrowse -mountroot "$MNTDIR")
         if [ "$xc3" = 1 ]; then
@@ -548,8 +564,17 @@ EOF
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
-        if [ "$osx1012" = 1 ]; then
-            curl -L -O https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.12.sdk.tar.xz
+        if [ "$xc8" = 1 ]; then
+            if [ "$osx1012" = 1 ]; then
+                echo "Extracting Mac OS X 10.12. Be patient - this can take a while"
+                open Xcode_8.2.1.xip
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.12.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.12.sdk; tar cf - SDKs/MacOSX10.12.sdk) | gzip -c > Xcode1012SDK.tar.gz) && echo "*** Created Xcode1012SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
         fi
         rmdir "$MNTDIR"
         ;;
