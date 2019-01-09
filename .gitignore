@@ -1,6 +1,8 @@
 *.dmg
 *.dmg.part
 *.pkg
+*.xip
+*.app
 *.tar.gz
 *.tar.xz
 
