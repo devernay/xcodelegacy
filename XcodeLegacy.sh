@@ -280,11 +280,11 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc8" = 1 ] && [ ! -f Xcode_8.2.1.xip ]; then
-            echo "*** You should download Xcode 8.2.1. Login to:"
+        if [ "$xc8" = 1 ] && [ ! -f Xcode8.3.3.xip ]; then
+            echo "*** You should download Xcode 8.3.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.2.1/Xcode_8.2.1.xip"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -566,8 +566,8 @@ EOF
         fi
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
-                echo "Extracting Mac OS X 10.12. Be patient - this can take a while"
-                open Xcode_8.2.1.xip
+                echo "Extracting Mac OS X 10.12 from Xcode 8.3.3. Be patient - this will take some time"
+                open Xcode8.3.3.xip
                 while [ ! -d Xcode.app ]; do
                     sleep 5
                 done
