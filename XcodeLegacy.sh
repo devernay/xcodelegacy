@@ -8,6 +8,7 @@
 # - Eric Knibbe <EricFromCanada@github>
 # - Chris Roueche <croueche@github>
 # - Kris Coppieters <zwettemaan@github>
+# - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -24,6 +25,7 @@
 # 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
 # 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
 # 2.1KC (26/10/2017): Added support to extract OS X 10.12 from Xcode 8.2.1 for use on Xcode 9/OS X 10.13
+# 2.2NB (10/01/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -39,6 +41,7 @@ osx109=0
 osx1010=0
 osx1011=0
 osx1012=0
+osx1013=0
 gotoption=0
 error=0
 
@@ -95,6 +98,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+        -osx1013)
+            osx1013=1
+            gotoption=1
+            shift
+            ;;
         *)
             # unknown option or spurious arg
             error=1
@@ -114,19 +122,20 @@ if [ $gotoption = 0 ]; then
     osx1010=1
     osx1011=1
     osx1012=1
+    osx1013=1
 fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
-    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4, Xcode 7.3.1 and Xcode 8.2.1 which"
+    echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4, Xcode 7.3.1, Xcode 8.3.3 and Xcode 9.4.1 which"
     echo "are not available in Xcode >= 4.2:"
     echo " - PPC assembler and linker"
     echo " - GCC 4.0 and 4.2 compilers and Xcode plugins"
     echo " - LLVM-GCC 4.2 compiler and Xcode plugin (Xcode >= 5)"
-    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12"
+    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default"
     echo "everything is done):"
@@ -141,6 +150,7 @@ if [ $# != 1 ]; then
     echo " -osx1010   : only install OSX 10.10 SDK"
     echo " -osx1011   : only install OSX 10.11 SDK"
     echo " -osx1012   : only install OSX 10.12 SDK"
+    echo " -osx1013   : only install OSX 10.13 SDK"
     echo "Note that these can be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one could execute:"
     echo " $ $0 -osx109 -osx1010 buildpackages"
@@ -201,6 +211,7 @@ xc5="$(( osx108 != 0 ))"
 xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
 xc8="$(( osx1012 != 0 ))"
+xc9="$(( osx1013 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -285,6 +296,14 @@ case $1 in
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip"
+            echo "and then run this script from within the same directory as the downloaded file"
+            missingdmg=1
+        fi
+        if [ "$xc9" = 1 ] && [ ! -f Xcode_9.4.1.xip ]; then
+            echo "*** You should download Xcode 9.4.1. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -566,13 +585,25 @@ EOF
         fi
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
-                echo "Extracting Mac OS X 10.12 from Xcode 8.3.3. Be patient - this will take some time"
+                echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
                 open Xcode8.3.3.xip
                 while [ ! -d Xcode.app ]; do
                     sleep 5
                 done
                 sleep 5
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.12.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.12.sdk; tar cf - SDKs/MacOSX10.12.sdk) | gzip -c > Xcode1012SDK.tar.gz) && echo "*** Created Xcode1012SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
+        fi
+        if [ "$xc9" = 1 ]; then
+            if [ "$osx1013" = 1 ]; then
+                echo "Extracting Mac OS X 10.13 SDK from Xcode 9.4.1. Be patient - this will take some time"
+                open Xcode_9.4.1.xip
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.13.sdk; tar cf - SDKs/MacOSX10.13.sdk) | gzip -c > Xcode1013SDK.tar.gz) && echo "*** Created Xcode1013SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
         fi
@@ -982,6 +1013,10 @@ SPEC_EOF
             installSDK 10.12
         fi
 
+        if [ "$osx1013" = 1 ]; then
+            installSDK 10.13
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1110,6 +1145,9 @@ SPEC_EOF
         if [ "$osx1012" = 1 ]; then
             rm Xcode1012SDK.tar.gz 2>/dev/null
         fi
+        if [ "$osx1012" = 1 ]; then
+            rm Xcode1013SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -1216,6 +1254,10 @@ SPEC_EOF
         fi
         if [ "$osx1012" = 1 ]; then
             i=10.12
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+        if [ "$osx1013" = 1 ]; then
+            i=10.13
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         

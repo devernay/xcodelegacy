@@ -1,7 +1,7 @@
 XcodeLegacy
 ===========
 
-Legacy components for Xcode 4-8 (deprecated compilers and Mac OS X SDKs).
+Legacy components for Xcode 4-10 (deprecated compilers and Mac OS X SDKs).
 
 Home page: https://github.com/devernay/xcodelegacy
 
@@ -10,12 +10,12 @@ Description
 
 Many components were removed in recent versions of Xcode, the most notable being the Mac OS X 10.6 SDK, which is required to build software using the Carbon API (such as wxWidgets 2.8).
 
-I made the script XcodeLegacy.sh to extract these components (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first) from [Xcode 3.2.6](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) (10.4, 10.5 and 10.6 SDKs, PPC assembler, GCC 4.0 and 4.2, LLVM-GCC 4.2), [Xcode 4.6.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) (10.7 SDK), [Xcode 5.1.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) (10.8 SDK), [Xcode 6.4](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) (10.9 and 10.10 SDKs), [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) (10.11 SDK) and install them in Xcode 4-8:
+I made the script XcodeLegacy.sh to extract these components (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first) from [Xcode 3.2.6](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) (10.4, 10.5 and 10.6 SDKs, PPC assembler, GCC 4.0 and 4.2, LLVM-GCC 4.2), [Xcode 4.6.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg) (10.7 SDK), [Xcode 5.1.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg) (10.8 SDK), [Xcode 6.4](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) (10.9 and 10.10 SDKs), [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) (10.11 SDK), [Xcode 8.3.3](https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip) (10.12 SDK), [Xcode 9.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip) (10.13 SDK) and install them in Xcode 4-10:
 
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 compilers
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
 - PPC assembler
-- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11
+- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13
 
 The script also fixes a few known bugs in the 10.4, 10.5 and 10.6 SDK.
 
@@ -35,7 +35,7 @@ Open a Terminal application, change to the directory where `XcodeLegacy.sh`, and
 cd path/to/xcodelegacy
 chmod +x XcodeLegacy.sh
 ```
-Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-8), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-8).
+Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-10), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-10).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
@@ -51,6 +51,7 @@ Optionally, one of the following options can be passed as the *first* argument t
 * `-osx1010` : only install OSX 10.10 SDK
 * `-osx1011` : only install OSX 10.11 SDK
 * `-osx1012` : only install OSX 10.12 SDK
+* `-osx1013` : only install OSX 10.13 SDK
 
 
 Using the older SDKs
@@ -111,6 +112,7 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 7.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.2.1/Xcode_7.2.1.dmg) on OS X 10.10 (Yosemite)
 - [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) on OS X 10.11 (El Capitan), please see note on linking below. [Xcode 8.2.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8.2.1/Xcode_8.2.1.xip) also runs on OS X 10.11, but can only compile for macOS 10.12.
 - [Xcode 8.3.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip) on macOS 10.12 (Sierra), please see note on linking below.
+- [Xcode 9.4.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip) on macOS 10.13 (High Sierra), please see note on linking below.
 
 (*) These Xcode versions were released before 26.03.2012 and may cause an "An unknown installation error" during installation, which is due to an expired certificate. Installing these may require disabling network time sync and setting the date to 01.01.2012 before installing. Network time sync may be re-enabled after install. See [this stackexchange question](https://apple.stackexchange.com/questions/45841/xcode-4-2-snow-leopard-doesnt-install) for more details.
 
@@ -207,4 +209,5 @@ History
 - 1.7 (05/04/2016): Xcode 7.3 disables support for older SDKs, fix that
 - 1.9 (16/09/2016): Xcode 8 dropped 10.11 SDK, get it from Xcode 7.3.1
 - 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
-- 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
+- 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from Xcode 8.3.3; fix compiling with GNU Ada, and many other fixes
+- 2.2 (10/01/2019): Xcode 10 dropped 10.13 SDK, get it from Xcode 9.4.1
