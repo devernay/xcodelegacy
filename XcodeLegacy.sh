@@ -26,6 +26,7 @@
 # 2.0 (02/05/2017): Xcode 8 cannot always link i386 for OS X 10.5, use the Xcode 3 linker for this arch too. Force use of legacy assembler with GCC 4.x.
 # 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
 # 2.2 (12/02/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
+# 2.3 (27/03/2019): Added an option to install in a custom Xcode path
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -103,6 +104,10 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+        -path=*)
+            CUSTOM_APP="${1#*=}"
+            shift
+            ;;
         *)
             # unknown option or spurious arg
             error=1
@@ -127,7 +132,7 @@ fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013] [-path=/path/to/XcodeXXX.app] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
     echo "from Xcode 3.2.6, Xcode 4.6.3, Xcode 5.1.1, Xcode 6.4, Xcode 7.3.1, Xcode 8.3.3 and Xcode 9.4.1 which"
@@ -151,6 +156,8 @@ if [ $# != 1 ]; then
     echo " -osx1011   : only install OSX 10.11 SDK"
     echo " -osx1012   : only install OSX 10.12 SDK"
     echo " -osx1013   : only install OSX 10.13 SDK"
+    echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
+    echo "              e.g. -path=/Application/Xcode_8.3.1.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one could execute:"
     echo " $ $0 -osx109 -osx1010 buildpackages"
@@ -166,7 +173,9 @@ if [ $# != 1 ]; then
     exit
 fi
 
-if [ "$1" = "installbeta" ] || [ "$1" = "uninstallbeta" ]; then
+if [ ! -z $CUSTOM_APP ]; then
+    XCODEAPP="$CUSTOM_APP"
+elif [ "$1" = "installbeta" ] || [ "$1" = "uninstallbeta" ]; then
     XCODEAPP="/Applications/Xcode-beta.app"
 else
     XCODEAPP="/Applications/Xcode.app"
