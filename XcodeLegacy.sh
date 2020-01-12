@@ -525,9 +525,9 @@ EOF
         fi
 
         if [ "$xc4" = 1 ]; then
-            hdiutil attach xcode4630916281a.dmg "${ATTACH_OPTS[@]}"
+            hdiutil attach xcode_4.6.3.dmg "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
-                echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
+                echo "*** Error while trying to attach disk image xcode_4.6.3.dmg"
                 echo "Aborting"
                 rmdir "$MNTDIR"
                 exit
@@ -588,7 +588,7 @@ EOF
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
                 echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
-                open Xcode8.3.3.xip
+                open Xcode_8.3.3.xip
                 while [ ! -d Xcode.app ]; do
                     sleep 5
                 done
