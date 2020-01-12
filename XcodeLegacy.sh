@@ -9,6 +9,7 @@
 # - Chris Roueche <croueche@github>
 # - Kris Coppieters <zwettemaan@github>
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
+# - Nathan Blais <NathanBlais@github>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -260,13 +261,11 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc4" = 1 ] && [ ! -f xcode4630916281a.dmg ]; then
+        if [ "$xc4" = 1 ] && [ ! -f xcode_4.6.3.dmg ]; then
             echo "*** You should download Xcode 4.6.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -274,9 +273,7 @@ case $1 in
             echo "*** You should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/xcode_5.1.1/Xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -284,9 +281,7 @@ case $1 in
             echo "*** You should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -294,17 +289,15 @@ case $1 in
             echo "*** You should download Xcode 7.3.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc8" = 1 ] && [ ! -f Xcode8.3.3.xip ]; then
+        if [ "$xc8" = 1 ] && [ ! -f Xcode_8.3.3.xip ]; then
             echo "*** You should download Xcode 8.3.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
