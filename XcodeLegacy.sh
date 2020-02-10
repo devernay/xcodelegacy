@@ -27,7 +27,7 @@
 # 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
 # 2.2 (12/02/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
 # 2.3 (27/03/2019): Added an option to install in a custom Xcode path
-# 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download path and archive names.
+# 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download paths and archive names.
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
