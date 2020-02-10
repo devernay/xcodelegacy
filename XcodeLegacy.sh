@@ -320,7 +320,7 @@ case $1 in
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
-        if [ "$xc8" = 1 ]; then
+        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ]; then
             if [ -e Xcode.app ]; then
                 echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
                 exit
