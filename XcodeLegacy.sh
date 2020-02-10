@@ -261,22 +261,25 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc4" = 1 ] && [ ! -f xcode4630916281a.dmg ]; then
-            echo "*** You should download Xcode 4.6.3. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+            xcode4archive="xcode4630916281a.dmg"
+            if [ ! -f xcode4630916281a.dmg ] && [ ! -f Xcode_4.6.3.dmg ]; then
+                echo "*** You should download Xcode 4.6.3. Login to:"
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            else
+                if [ -f Xcode_4.6.3.dmg ]; then
+                    xcode4archive="Xcode_4.6.3.dmg"
+                fi
+            fi
         fi
         if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
             echo "*** You should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/xcode_5.1.1/Xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -532,7 +535,7 @@ EOF
         fi
 
         if [ "$xc4" = 1 ]; then
-            hdiutil attach xcode4630916281a.dmg "${ATTACH_OPTS[@]}"
+            hdiutil attach "$xcode4archive" "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
                 echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
                 echo "Aborting"
