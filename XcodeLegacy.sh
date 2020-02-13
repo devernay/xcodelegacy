@@ -9,6 +9,7 @@
 # - Chris Roueche <croueche@github>
 # - Kris Coppieters <zwettemaan@github>
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
+# - Alan Staniforth <apollonia.uk@gmail.com>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
