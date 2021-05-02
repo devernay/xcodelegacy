@@ -959,6 +959,9 @@ if [ "\$USE_OLD_LD" -eq '1' ]; then
                 elif [ "\$var" = '-object_path_lto' ]; then
                         OBJECT_PATH_LTO_FOUND=1
                         continue
+                elif [ "\$var" = '-lto_library' ]; then
+                        OBJECT_PATH_LTO_FOUND=1
+                        continue
                 elif [ "\$var" = '-no_deduplicate' ]; then
                         continue
                 elif [ "\$var" = '-export_dynamic' ]; then
