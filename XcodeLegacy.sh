@@ -30,6 +30,8 @@
 # 2.2 (12/02/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
 # 2.3 (27/03/2019): Added an option to install in a custom Xcode path
 # 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download paths and archive names.
+# 2.5 (31/04/2021): Xcode 11 dropped 10.14 SDK, get it from Xcode 10.3
+# 2.6 (01/05/2021): Xcode 12 dropped 10.15 SDK, get it from Xcode 11.7
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -47,6 +49,7 @@ osx1011=0
 osx1012=0
 osx1013=0
 osx1014=0
+osx1015=0
 gotoption=0
 error=0
 
@@ -113,6 +116,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+		-osx1015)
+            osx1015=1
+            gotoption=1
+            shift
+            ;;
         -path=*)
             CUSTOM_APP="${1#*=}"
             shift
@@ -138,6 +146,7 @@ if [ $gotoption = 0 ]; then
     osx1012=1
     osx1013=1
 	osx1014=1
+	osx1015=1
 fi
 
 if [ $# != 1 ]; then
@@ -167,6 +176,7 @@ if [ $# != 1 ]; then
     echo " -osx1012   : only install OSX 10.12 SDK"
     echo " -osx1013   : only install OSX 10.13 SDK"
 	echo " -osx1014   : only install OSX 10.14 SDK"
+	echo " -osx1015   : only install OSX 10.15 SDK"
     echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
     echo "              e.g. -path=/Application/Xcode_8.3.1.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
@@ -233,6 +243,7 @@ xc7="$(( osx1011 != 0 ))"
 xc8="$(( osx1012 != 0 ))"
 xc9="$(( osx1013 != 0 ))"
 xc10="$(( osx1014 != 0 ))"
+xc11="$(( osx1015 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -375,6 +386,14 @@ case $1 in
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
             echo " https://download.developer.apple.com/Developer_Tools/Xcode_10.3/Xcode_10.3.xip"
+            echo "and then run this script from within the same directory as the downloaded file"
+            missingdmg=1
+        fi
+		if [ "$xc11" = 1 ] && [ ! -f Xcode_11.7.xip ]; then
+            echo "*** You should download Xcode 11.7. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_11.7/Xcode_11.7.xip"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -687,6 +706,18 @@ EOF
                 done
                 sleep 5
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.14.sdk; tar cf - SDKs/MacOSX10.14.sdk) | gzip -c > Xcode1014SDK.tar.gz) && echo "*** Created Xcode1014SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
+        fi
+		if [ "$xc11" = 1 ]; then
+            if [ "$osx1015" = 1 ]; then
+                echo "Extracting Mac OS X 10.15 SDK from Xcode 11.7. Be patient - this will take some time"
+                open Xcode_11.7.xip
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.15.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.15.sdk; tar cf - SDKs/MacOSX10.15.sdk) | gzip -c > Xcode1015SDK.tar.gz) && echo "*** Created Xcode1015SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
         fi
@@ -1107,6 +1138,10 @@ SPEC_EOF
             installSDK 10.14
         fi
 
+		if [ "$osx1015" = 1 ]; then
+            installSDK 10.15
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1241,6 +1276,9 @@ SPEC_EOF
 		if [ "$osx1014" = 1 ]; then
             rm Xcode1014SDK.tar.gz 2>/dev/null
         fi
+		if [ "$osx1015" = 1 ]; then
+            rm Xcode1015SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -1355,6 +1393,10 @@ SPEC_EOF
         fi
 		if [ "$osx1014" = 1 ]; then
             i=10.14
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+		if [ "$osx1015" = 1 ]; then
+            i=10.15
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
