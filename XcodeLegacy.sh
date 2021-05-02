@@ -9,6 +9,7 @@
 # - Chris Roueche <croueche@github>
 # - Kris Coppieters <zwettemaan@github>
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
+# - Nathan Blais <NathanBlais@github>
 # - Alan Staniforth <apollonia.uk@gmail.com>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
@@ -298,9 +299,7 @@ case $1 in
             echo "*** You should download Xcode 6.4. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -308,45 +307,43 @@ case $1 in
             echo "*** You should download Xcode 7.3.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc8" = 1 ]; then        
-			xcode8archive="Xcode_8.3.3.xip"
-			validarcfound=0
-			noarcfound=0
-			if [ ! -f Xcode_8.3.3.xip ] && [ ! -f Xcode8.3.3.xip ]; then
-				echo "*** You should download Xcode 8.3.3. Login to:"
-				noarcfound=1
-			else
-				if [ -f Xcode8.3.3.xip ]; then
-					pkgutil --check-signature Xcode8.3.3.xip
-					if [ "$?" = 0 ]; then
-						xcode8archive="Xcode8.3.3.xip"
-						validarcfound=1
-					fi
-				fi
-				if [ -f Xcode_8.3.3.xip ] && [ "$validarcfound" = 0 ]; then
+        if [ "$xc8" = 1 ]; then
+            xcode8archive="Xcode_8.3.3.xip"
+            validarcfound=0
+            noarcfound=0
+            if [ ! -f Xcode_8.3.3.xip ] && [ ! -f Xcode8.3.3.xip ]; then
+                echo "*** You should download Xcode 8.3.3. Login to:"
+                noarcfound=1
+            else
+                if [ -f Xcode8.3.3.xip ]; then
+                    pkgutil --check-signature Xcode8.3.3.xip
+                    if [ "$?" = 0 ]; then
+                        xcode8archive="Xcode8.3.3.xip"
+                        validarcfound=1
+                    fi
+                fi
+                if [ -f Xcode_8.3.3.xip ] && [ "$validarcfound" = 0 ]; then
                     pkgutil --check-signature Xcode_8.3.3.xip
                     if [ "$?" = 0 ]; then
                         validarcfound=1
                     fi
                 fi
-				if [ "$validarcfound" = 0 ]; then
-					echo "*** You have an old Xcode 8.3.3 archive with an expired signature"
-					echo "You should download the updated Xcode 8.3.3 archive. Login to:"
-				fi
-			fi
-			if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
-				echo " https://developer.apple.com/downloads/"
-				echo "then download from:"
-				echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
-				echo "and then run this script from within the same directory as the downloaded file"
-				missingdmg=1
-			fi
+                if [ "$validarcfound" = 0 ]; then
+                    echo "*** You have an old Xcode 8.3.3 archive with an expired signature"
+                    echo "You should download the updated Xcode 8.3.3 archive. Login to:"
+                fi
+            fi
+            if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            fi
         fi
         if [ "$xc9" = 1 ]; then
 			validarcfound=0
@@ -599,7 +596,7 @@ EOF
         if [ "$xc4" = 1 ]; then
             hdiutil attach "$xcode4archive" "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
-                echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
+                echo "*** Error while trying to attach disk image xcode_4.6.3.dmg"
                 echo "Aborting"
                 rmdir "$MNTDIR"
                 exit
