@@ -787,7 +787,7 @@ EOF
 
                 # Note that we don't look for AS in $AS_DIR/../libexec/as/\$ARCH/as
                 # because gprbuild (from GNU Ada) calls as with both -m and -arch
-                # flags, and the arch-specific as doesn'b understand -m32 or -m64.
+                # flags, and the arch-specific as doesn't understand -m32 or -m64.
                 # We just look for as in a few places, and if it's not there, we
                 # look for as-original, starting in the current dir.
                 # In any case, we prune -m32 and -m64 from the as args.
@@ -1183,7 +1183,7 @@ SPEC_EOF
         # see https://github.com/devernay/xcodelegacy/issues/23
         if [ -f "$PLATFORMDIR/Info.plist-original" ]; then
             echo "*** Not modifying MacOSX Info.plist (found original at $PLATFORMDIR/Info.plist-original, uninstall first to force install)"
-        elif [ -f "$PLATFORMDIR/Info.plist" ]; then
+        elif [ -f "$PLATFORMDIR/Info.plist" ] && grep -q MinimumSDKVersion "$PLATFORMDIR/Info.plist"; then
             mv "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
             plutil -remove MinimumSDKVersion -o "$PLATFORMDIR/Info.plist" "$PLATFORMDIR/Info.plist-original"
             echo "*** modified MacOSX Info.plist"
