@@ -9,6 +9,7 @@
 # - Chris Roueche <croueche@github>
 # - Kris Coppieters <zwettemaan@github>
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
+# - Alan Staniforth <apollonia.uk@gmail.com>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -27,6 +28,7 @@
 # 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
 # 2.2 (12/02/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
 # 2.3 (27/03/2019): Added an option to install in a custom Xcode path
+# 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download paths and archive names.
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -261,22 +263,25 @@ case $1 in
             missingdmg=1
         fi
         if [ "$xc4" = 1 ] && [ ! -f xcode4630916281a.dmg ]; then
-            echo "*** You should download Xcode 4.6.3. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_4.6.3/xcode4630916281a.dmg"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+            xcode4archive="xcode4630916281a.dmg"
+            if [ ! -f xcode4630916281a.dmg ] && [ ! -f Xcode_4.6.3.dmg ]; then
+                echo "*** You should download Xcode 4.6.3. Login to:"
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            else
+                if [ -f Xcode_4.6.3.dmg ]; then
+                    xcode4archive="Xcode_4.6.3.dmg"
+                fi
+            fi
         fi
         if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
             echo "*** You should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
-            echo "or"
-            echo " https://adcdownload.apple.com/Developer_Tools/xcode_5.1.1/xcode_5.1.1.dmg"
+            echo " https://download.developer.apple.com/Developer_Tools/xcode_5.1.1/Xcode_5.1.1.dmg"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -300,27 +305,70 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc8" = 1 ] && [ ! -f Xcode8.3.3.xip ]; then
-            echo "*** You should download Xcode 8.3.3. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+        if [ "$xc8" = 1 ]; then        
+			xcode8archive="Xcode_8.3.3.xip"
+			validarcfound=0
+			noarcfound=0
+			if [ ! -f Xcode_8.3.3.xip ] && [ ! -f Xcode8.3.3.xip ]; then
+				echo "*** You should download Xcode 8.3.3. Login to:"
+				noarcfound=1
+			else
+				if [ -f Xcode8.3.3.xip ]; then
+					pkgutil --check-signature Xcode8.3.3.xip
+					if [ "$?" = 0 ]; then
+						xcode8archive="Xcode8.3.3.xip"
+						validarcfound=1
+					fi
+				fi
+				if [ -f Xcode_8.3.3.xip ] && [ "$validarcfound" = 0 ]; then
+                    pkgutil --check-signature Xcode_8.3.3.xip
+                    if [ "$?" = 0 ]; then
+                        validarcfound=1
+                    fi
+                fi
+				if [ "$validarcfound" = 0 ]; then
+					echo "*** You have an old Xcode 8.3.3 archive with an expired signature"
+					echo "You should download the updated Xcode 8.3.3 archive. Login to:"
+				fi
+			fi
+			if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
+				echo " https://developer.apple.com/downloads/"
+				echo "then download from:"
+				echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
+				echo "and then run this script from within the same directory as the downloaded file"
+				missingdmg=1
+			fi
         fi
-        if [ "$xc9" = 1 ] && [ ! -f Xcode_9.4.1.xip ]; then
-            echo "*** You should download Xcode 9.4.1. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+        if [ "$xc9" = 1 ]; then
+			validarcfound=0
+			noarcfound=0
+			if [ ! -f Xcode_9.4.1.xip ]; then
+				echo "*** You should download Xcode 9.4.1. Login to:"
+				noarcfound=1
+			else
+				pkgutil --check-signature Xcode_9.4.1.xip
+				if [ "$?" = 0 ]; then
+					validarcfound=1
+				else
+					echo "*** You have an old Xcode 9.4.1 archive with an expired signature"
+					echo "You should download the updated Xcode 9.4.1 archive. Login to:"
+				fi
+			fi
+			if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
+				echo " https://developer.apple.com/downloads/"
+				echo "then download from:"
+				echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
+                echo "or"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
+				echo "and then run this script from within the same directory as the downloaded file"
+				missingdmg=1
+			fi
         fi
         if [ "$missingdmg" = 1 ]; then
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
-        if [ "$xc8" = 1 ]; then
+        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ]; then
             if [ -e Xcode.app ]; then
                 echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
                 exit
@@ -532,7 +580,7 @@ EOF
         fi
 
         if [ "$xc4" = 1 ]; then
-            hdiutil attach xcode4630916281a.dmg "${ATTACH_OPTS[@]}"
+            hdiutil attach "$xcode4archive" "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
                 echo "*** Error while trying to attach disk image xcode4630916281a.dmg"
                 echo "Aborting"
@@ -595,7 +643,7 @@ EOF
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
                 echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
-                open Xcode8.3.3.xip
+                open "$xcode8archive"
                 while [ ! -d Xcode.app ]; do
                     sleep 5
                 done
