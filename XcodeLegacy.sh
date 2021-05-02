@@ -10,6 +10,7 @@
 # - Kris Coppieters <zwettemaan@github>
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
 # - Nathan Blais <NathanBlais@github>
+# - Alan Staniforth <apollonia.uk@gmail.com>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -28,6 +29,7 @@
 # 2.1 (17/01/2017): Xcode 9 dropped 10.12 SDK, get it from https://github.com/phracker/MacOSX-SDKs; fix compiling with GNU Ada, and many other fixes
 # 2.2 (12/02/2019): Added support for using macOS High Sierra 10.13 SDK from Xcode 9.4.1 for use on Xcode 10/macOS 10.14 Mojave, also changed source of OS X 10.12 SDK to Xcode 8.3.3
 # 2.3 (27/03/2019): Added an option to install in a custom Xcode path
+# 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download paths and archive names.
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -44,6 +46,7 @@ osx1010=0
 osx1011=0
 osx1012=0
 osx1013=0
+osx1014=0
 gotoption=0
 error=0
 
@@ -105,6 +108,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+		-osx1014)
+            osx1014=1
+            gotoption=1
+            shift
+            ;;
         -path=*)
             CUSTOM_APP="${1#*=}"
             shift
@@ -129,6 +137,7 @@ if [ $gotoption = 0 ]; then
     osx1011=1
     osx1012=1
     osx1013=1
+	osx1014=1
 fi
 
 if [ $# != 1 ]; then
@@ -157,6 +166,7 @@ if [ $# != 1 ]; then
     echo " -osx1011   : only install OSX 10.11 SDK"
     echo " -osx1012   : only install OSX 10.12 SDK"
     echo " -osx1013   : only install OSX 10.13 SDK"
+	echo " -osx1014   : only install OSX 10.14 SDK"
     echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
     echo "              e.g. -path=/Application/Xcode_8.3.1.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
@@ -222,6 +232,7 @@ xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
 xc8="$(( osx1012 != 0 ))"
 xc9="$(( osx1013 != 0 ))"
+xc10="$(( osx1014 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -261,13 +272,20 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc4" = 1 ] && [ ! -f xcode_4.6.3.dmg ]; then
-            echo "*** You should download Xcode 4.6.3. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+        if [ "$xc4" = 1 ] && [ ! -f xcode4630916281a.dmg ]; then
+            xcode4archive="xcode4630916281a.dmg"
+            if [ ! -f xcode4630916281a.dmg ] && [ ! -f Xcode_4.6.3.dmg ]; then
+                echo "*** You should download Xcode 4.6.3. Login to:"
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            else
+                if [ -f Xcode_4.6.3.dmg ]; then
+                    xcode4archive="Xcode_4.6.3.dmg"
+                fi
+            fi
         fi
         if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
             echo "*** You should download Xcode 5.1.1. Login to:"
@@ -293,19 +311,70 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
-        if [ "$xc8" = 1 ] && [ ! -f Xcode_8.3.3.xip ]; then
-            echo "*** You should download Xcode 8.3.3. Login to:"
-            echo " https://developer.apple.com/downloads/"
-            echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
-            echo "and then run this script from within the same directory as the downloaded file"
-            missingdmg=1
+        if [ "$xc8" = 1 ]; then
+            xcode8archive="Xcode_8.3.3.xip"
+            validarcfound=0
+            noarcfound=0
+            if [ ! -f Xcode_8.3.3.xip ] && [ ! -f Xcode8.3.3.xip ]; then
+                echo "*** You should download Xcode 8.3.3. Login to:"
+                noarcfound=1
+            else
+                if [ -f Xcode8.3.3.xip ]; then
+                    pkgutil --check-signature Xcode8.3.3.xip
+                    if [ "$?" = 0 ]; then
+                        xcode8archive="Xcode8.3.3.xip"
+                        validarcfound=1
+                    fi
+                fi
+                if [ -f Xcode_8.3.3.xip ] && [ "$validarcfound" = 0 ]; then
+                    pkgutil --check-signature Xcode_8.3.3.xip
+                    if [ "$?" = 0 ]; then
+                        validarcfound=1
+                    fi
+                fi
+                if [ "$validarcfound" = 0 ]; then
+                    echo "*** You have an old Xcode 8.3.3 archive with an expired signature"
+                    echo "You should download the updated Xcode 8.3.3 archive. Login to:"
+                fi
+            fi
+            if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            fi
         fi
-        if [ "$xc9" = 1 ] && [ ! -f Xcode_9.4.1.xip ]; then
-            echo "*** You should download Xcode 9.4.1. Login to:"
+        if [ "$xc9" = 1 ]; then
+			validarcfound=0
+			noarcfound=0
+			if [ ! -f Xcode_9.4.1.xip ]; then
+				echo "*** You should download Xcode 9.4.1. Login to:"
+				noarcfound=1
+			else
+				pkgutil --check-signature Xcode_9.4.1.xip
+				if [ "$?" = 0 ]; then
+					validarcfound=1
+				else
+					echo "*** You have an old Xcode 9.4.1 archive with an expired signature"
+					echo "You should download the updated Xcode 9.4.1 archive. Login to:"
+				fi
+			fi
+			if [ "$noarcfound" = 1 ] || [ "$validarcfound" = 0 ]; then
+				echo " https://developer.apple.com/downloads/"
+				echo "then download from:"
+				echo " https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
+                echo "or"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
+				echo "and then run this script from within the same directory as the downloaded file"
+				missingdmg=1
+			fi
+        fi
+		if [ "$xc10" = 1 ] && [ ! -f Xcode_10.3.xip ]; then
+            echo "*** You should download Xcode 10.3. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
-            echo " https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_10.3/Xcode_10.3.xip"
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
@@ -313,7 +382,7 @@ case $1 in
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
-        if [ "$xc8" = 1 ]; then
+        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ]; then
             if [ -e Xcode.app ]; then
                 echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
                 exit
@@ -525,7 +594,7 @@ EOF
         fi
 
         if [ "$xc4" = 1 ]; then
-            hdiutil attach xcode_4.6.3.dmg "${ATTACH_OPTS[@]}"
+            hdiutil attach "$xcode4archive" "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
                 echo "*** Error while trying to attach disk image xcode_4.6.3.dmg"
                 echo "Aborting"
@@ -588,7 +657,7 @@ EOF
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
                 echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
-                open Xcode_8.3.3.xip
+                open "$xcode8archive"
                 while [ ! -d Xcode.app ]; do
                     sleep 5
                 done
@@ -606,6 +675,18 @@ EOF
                 done
                 sleep 5
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.13.sdk; tar cf - SDKs/MacOSX10.13.sdk) | gzip -c > Xcode1013SDK.tar.gz) && echo "*** Created Xcode1013SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
+        fi
+		if [ "$xc10" = 1 ]; then
+            if [ "$osx1014" = 1 ]; then
+                echo "Extracting Mac OS X 10.14 SDK from Xcode 10.3. Be patient - this will take some time"
+                open Xcode_10.3.xip
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.14.sdk; tar cf - SDKs/MacOSX10.14.sdk) | gzip -c > Xcode1014SDK.tar.gz) && echo "*** Created Xcode1014SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
         fi
@@ -1019,6 +1100,10 @@ SPEC_EOF
             installSDK 10.13
         fi
 
+		if [ "$osx1014" = 1 ]; then
+            installSDK 10.14
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1147,8 +1232,11 @@ SPEC_EOF
         if [ "$osx1012" = 1 ]; then
             rm Xcode1012SDK.tar.gz 2>/dev/null
         fi
-        if [ "$osx1012" = 1 ]; then
+        if [ "$osx1013" = 1 ]; then
             rm Xcode1013SDK.tar.gz 2>/dev/null
+        fi
+		if [ "$osx1014" = 1 ]; then
+            rm Xcode1014SDK.tar.gz 2>/dev/null
         fi
 
         ;;
@@ -1260,6 +1348,10 @@ SPEC_EOF
         fi
         if [ "$osx1013" = 1 ]; then
             i=10.13
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+		if [ "$osx1014" = 1 ]; then
+            i=10.14
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
