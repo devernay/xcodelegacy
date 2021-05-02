@@ -45,6 +45,7 @@ osx1010=0
 osx1011=0
 osx1012=0
 osx1013=0
+osx1014=0
 gotoption=0
 error=0
 
@@ -106,6 +107,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+		-osx1014)
+            osx1014=1
+            gotoption=1
+            shift
+            ;;
         -path=*)
             CUSTOM_APP="${1#*=}"
             shift
@@ -130,6 +136,7 @@ if [ $gotoption = 0 ]; then
     osx1011=1
     osx1012=1
     osx1013=1
+	osx1014=1
 fi
 
 if [ $# != 1 ]; then
@@ -158,6 +165,7 @@ if [ $# != 1 ]; then
     echo " -osx1011   : only install OSX 10.11 SDK"
     echo " -osx1012   : only install OSX 10.12 SDK"
     echo " -osx1013   : only install OSX 10.13 SDK"
+	echo " -osx1014   : only install OSX 10.14 SDK"
     echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
     echo "              e.g. -path=/Application/Xcode_8.3.1.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
@@ -223,6 +231,7 @@ xc6="$(( osx109 + osx1010 != 0 ))"
 xc7="$(( osx1011 != 0 ))"
 xc8="$(( osx1012 != 0 ))"
 xc9="$(( osx1013 != 0 ))"
+xc10="$(( osx1014 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -363,6 +372,14 @@ case $1 in
 				echo "and then run this script from within the same directory as the downloaded file"
 				missingdmg=1
 			fi
+        fi
+		if [ "$xc10" = 1 ] && [ ! -f Xcode_10.3.xip ]; then
+            echo "*** You should download Xcode 10.3. Login to:"
+            echo " https://developer.apple.com/downloads/"
+            echo "then download from:"
+            echo " https://download.developer.apple.com/Developer_Tools/Xcode_10.3/Xcode_10.3.xip"
+            echo "and then run this script from within the same directory as the downloaded file"
+            missingdmg=1
         fi
         if [ "$missingdmg" = 1 ]; then
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
@@ -661,6 +678,18 @@ EOF
                 done
                 sleep 5
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.13.sdk; tar cf - SDKs/MacOSX10.13.sdk) | gzip -c > Xcode1013SDK.tar.gz) && echo "*** Created Xcode1013SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
+        fi
+		if [ "$xc10" = 1 ]; then
+            if [ "$osx1014" = 1 ]; then
+                echo "Extracting Mac OS X 10.14 SDK from Xcode 10.3. Be patient - this will take some time"
+                open Xcode_10.3.xip
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.14.sdk; tar cf - SDKs/MacOSX10.14.sdk) | gzip -c > Xcode1014SDK.tar.gz) && echo "*** Created Xcode1014SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
         fi
@@ -1074,6 +1103,10 @@ SPEC_EOF
             installSDK 10.13
         fi
 
+		if [ "$osx1014" = 1 ]; then
+            installSDK 10.14
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1202,8 +1235,11 @@ SPEC_EOF
         if [ "$osx1012" = 1 ]; then
             rm Xcode1012SDK.tar.gz 2>/dev/null
         fi
-        if [ "$osx1012" = 1 ]; then
+        if [ "$osx1013" = 1 ]; then
             rm Xcode1013SDK.tar.gz 2>/dev/null
+        fi
+		if [ "$osx1014" = 1 ]; then
+            rm Xcode1014SDK.tar.gz 2>/dev/null
         fi
 
         ;;
@@ -1315,6 +1351,10 @@ SPEC_EOF
         fi
         if [ "$osx1013" = 1 ]; then
             i=10.13
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+		if [ "$osx1014" = 1 ]; then
+            i=10.14
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
