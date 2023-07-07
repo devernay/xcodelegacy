@@ -298,7 +298,7 @@ case $1 in
                 fi
             fi
         fi
-        if [ "$xc5" = 1 ] && [ ! -f xcode_5.1.1.dmg ]; then
+        if [ "$xc5" = 1 ] && [ ! -f Xcode_5.1.1.dmg ]; then
             echo "*** You should download Xcode 5.1.1. Login to:"
             echo " https://developer.apple.com/downloads/"
             echo "then download from:"
@@ -631,9 +631,9 @@ EOF
         fi
 
         if [ "$xc5" = 1 ]; then
-            hdiutil attach xcode_5.1.1.dmg "${ATTACH_OPTS[@]}"
+            hdiutil attach Xcode_5.1.1.dmg "${ATTACH_OPTS[@]}"
             if [ ! -d "$MNTDIR/Xcode" ]; then
-                echo "*** Error while trying to attach disk image xcode_5.1.1.dmg"
+                echo "*** Error while trying to attach disk image Xcode_5.1.1.dmg"
                 echo "Aborting"
                 rmdir "$MNTDIR"
                 exit
