@@ -676,11 +676,7 @@ EOF
         if [ "$xc8" = 1 ]; then
             if [ "$osx1012" = 1 ]; then
                 echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
-                open "$xcode8archive"
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
+                xip --expand "$xcode8archive"
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.12.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.12.sdk; tar cf - SDKs/MacOSX10.12.sdk) | gzip -c > Xcode1012SDK.tar.gz) && echo "*** Created Xcode1012SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
@@ -688,11 +684,7 @@ EOF
         if [ "$xc9" = 1 ]; then
             if [ "$osx1013" = 1 ]; then
                 echo "Extracting Mac OS X 10.13 SDK from Xcode 9.4.1. Be patient - this will take some time"
-                open Xcode_9.4.1.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
+                xip --expand Xcode_9.4.1.xip
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.13.sdk; tar cf - SDKs/MacOSX10.13.sdk) | gzip -c > Xcode1013SDK.tar.gz) && echo "*** Created Xcode1013SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
@@ -700,11 +692,7 @@ EOF
 		if [ "$xc10" = 1 ]; then
             if [ "$osx1014" = 1 ]; then
                 echo "Extracting Mac OS X 10.14 SDK from Xcode 10.3. Be patient - this will take some time"
-                open Xcode_10.3.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
+                xip --expand Xcode_10.3.xip
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.14.sdk; tar cf - SDKs/MacOSX10.14.sdk) | gzip -c > Xcode1014SDK.tar.gz) && echo "*** Created Xcode1014SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
@@ -712,11 +700,7 @@ EOF
 		if [ "$xc11" = 1 ]; then
             if [ "$osx1015" = 1 ]; then
                 echo "Extracting Mac OS X 10.15 SDK from Xcode 11.7. Be patient - this will take some time"
-                open Xcode_11.7.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
+                xip --expand Xcode_11.7.xip
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.15.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.15.sdk; tar cf - SDKs/MacOSX10.15.sdk) | gzip -c > Xcode1015SDK.tar.gz) && echo "*** Created Xcode1015SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
