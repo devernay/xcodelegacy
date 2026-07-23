@@ -1,7 +1,7 @@
 XcodeLegacy
 ===========
 
-Legacy components for Xcode 4-12 (deprecated compilers and Mac OS X SDKs).
+Legacy components for Xcode 4-16 (deprecated compilers and Mac OS X / macOS SDKs).
 
 Home page: https://github.com/devernay/xcodelegacy
 
@@ -19,13 +19,18 @@ I made the script XcodeLegacy.sh to extract these components (the links work if 
 [Xcode 8.3.3](https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip) (10.12 SDK),
 [Xcode 9.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip) (10.13 SDK),
 [Xcode 10.3](https://download.developer.apple.com/Developer_Tools/Xcode_10.3/Xcode_10.3.xip) (10.14 SDK)
-[Xcode 11.7](https://download.developer.apple.com/Developer_Tools/Xcode_11.7/Xcode_11.7.xip) (10.15 SDK)
-and install them in Xcode 4-12:
+[Xcode 11.7](https://download.developer.apple.com/Developer_Tools/Xcode_11.7/Xcode_11.7.xip) (10.15 SDK),
+[Xcode 12.5.1](https://download.developer.apple.com/Developer_Tools/Xcode_12.5.1/Xcode_12.5.1.xip) (macOS 11 SDK),
+[Xcode 13.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_13.4.1/Xcode_13.4.1.xip) (macOS 12 SDK),
+[Xcode 14.3.1](https://download.developer.apple.com/Developer_Tools/Xcode_14.3.1/Xcode_14.3.1.xip) (macOS 13 SDK),
+[Xcode 15.4](https://download.developer.apple.com/Developer_Tools/Xcode_15.4/Xcode_15.4.xip) (macOS 14 SDK) and
+[Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) (macOS 15 SDK)
+and install them in Xcode 4-16:
 
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 compilers
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
 - PPC assembler
-- Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13, 10.14, 10.15
+- Mac OS X / macOS SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 11, 12, 13, 14, 15
 
 The script also fixes a few known bugs in the 10.4, 10.5 and 10.6 SDK.
 
@@ -45,7 +50,7 @@ Open a Terminal application, change to the directory where `XcodeLegacy.sh`, and
 cd path/to/xcodelegacy
 chmod +x XcodeLegacy.sh
 ```
-Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-10), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-10).
+Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-16), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-16).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
@@ -64,6 +69,11 @@ Optionally, one of the following options can be passed as the *first* argument t
 * `-osx1013` : only install OSX 10.13 SDK
 * `-osx1014` : only install OSX 10.14 SDK
 * `-osx1015` : only install OSX 10.15 SDK
+* `-osx11` : only install macOS 11 (Big Sur) SDK
+* `-osx12` : only install macOS 12 (Monterey) SDK
+* `-osx13` : only install macOS 13 (Ventura) SDK
+* `-osx14` : only install macOS 14 (Sonoma) SDK
+* `-osx15` : only install macOS 15 (Sequoia) SDK
 * `-path=path` : install to custom Xcode at 'path'
 
 
@@ -128,6 +138,13 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 9.4.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip) on macOS 10.13 (High Sierra), please see note on linking below. (\*\*)
 - [Xcode 10.3](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_10.3/Xcode_10.3.xip) on macOS 10.14 (Mojave), please see note on linking below.
 - [Xcode 11.7](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_11.7/Xcode_11.7.xip) on macOS 10.15 (Catalina).
+- [Xcode 12.5.1](https://download.developer.apple.com/Developer_Tools/Xcode_12.5.1/Xcode_12.5.1.xip) on macOS 11 (Big Sur) -- first Xcode line with native Apple Silicon (arm64) support (since Xcode 12.2).
+- [Xcode 13.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_13.4.1/Xcode_13.4.1.xip) on macOS 12 (Monterey).
+- [Xcode 14.3.1](https://download.developer.apple.com/Developer_Tools/Xcode_14.3.1/Xcode_14.3.1.xip) on macOS 13 (Ventura).
+- [Xcode 15.4](https://download.developer.apple.com/Developer_Tools/Xcode_15.4/Xcode_15.4.xip) on macOS 14 (Sonoma).
+- [Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) on macOS 15 (Sequoia).
+
+Xcode 12.4 and earlier require macOS 10.15.4 or older and are `x86_64`-only, so they **cannot run on Apple Silicon** (which needs macOS 11+); see the Apple Silicon section below.
 
 (\*) These Xcode versions were released before 26.03.2012 and may cause an "An unknown installation error" during installation, which is due to an expired certificate. Installing these may require disabling network time sync and setting the date to 01.01.2012 before installing. Network time sync may be re-enabled after install. See [this stackexchange question](https://apple.stackexchange.com/questions/45841/xcode-4-2-snow-leopard-doesnt-install) for more details.
 
@@ -167,6 +184,110 @@ There are two possible solutions:
 
 - check in the file `/Applications/Xcode.app/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/Ld.xcspec` if there is an Xcode setting to disable that option (`LD_LTO_OBJECT_FILE` in the above case)
 - edit `/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld` to prune the culprid option (and its argument if there is one).
+
+
+Apple Silicon (arm64) support and caveats
+-----------------------------------------
+
+The situation on Apple Silicon (M1/M2/M3/... Macs) is fundamentally different from Intel Macs. Read this before expecting the legacy compilers or the 10.x SDKs to work.
+
+### Which Xcode runs on Apple Silicon
+
+- Apple Silicon Macs can only boot **macOS 11 Big Sur or newer**. Any Xcode that requires macOS 10.15 or older (i.e. Xcode 3.x-12.4) therefore **cannot run at all** on an Apple Silicon Mac, regardless of Rosetta -- the operating system it needs will not run on the hardware.
+- **Xcode 12.2 was the first version with native `arm64` (Apple Silicon) support**, shipping as a universal binary. Xcode 12.5.1 and later require macOS 11+. In practice, on Apple Silicon you run Xcode 12.2+ natively; there is no need (and no way) to run the very old IDEs.
+- Rosetta 2 can translate `x86_64` code, so an `x86_64`-only tool can run translated -- but **Rosetta 2 does not translate `i386` (32-bit Intel) or PowerPC**. It also cannot help with a macOS version that will not boot.
+
+### The legacy GCC/LLVM-GCC compilers and PPC assembler/linker do NOT work on Apple Silicon
+
+The `-compilers` component extracts GCC 4.0/4.2, LLVM-GCC 4.2 and the PPC assembler/linker from Xcode 3.2.6 (2011). These binaries and the code they target are `i386`/`x86_64`/PPC only. Because Apple Silicon cannot run `i386` or PPC -- and cannot run the old macOS these tools were built for -- **these compilers are only useful on an Intel Mac** running a macOS old enough to also host an Xcode that supports them. Do not install `-compilers` on Apple Silicon.
+
+### The 10.x SDKs are Intel/PPC-only
+
+The Mac OS X 10.4u-10.15 SDKs contain only `ppc`/`i386`/`x86_64` slices (no `arm64`). You can still *extract* and *install* them on Apple Silicon (see below), but you can only *build* against them for Intel/PPC targets, and the resulting Intel binaries will run under Rosetta 2 only if they are `x86_64` (never `i386`/PPC). This was verified on macOS 26 / Apple Silicon: the current toolchain has no `i386` slice in `libSystem`, so linking `-arch i386` fails, and Rosetta 2 does not execute `i386` binaries.
+
+### The macOS 11-15 SDKs (added in 2.7) ARE usable on Apple Silicon
+
+The macOS 11, 12, 13, 14 and 15 SDKs extracted from Xcode 12.5.1/13.4.1/14.3.1/15.4/16.4 are **universal (`arm64` + `x86_64`)**. Installing one of these into a newer Xcode lets you build against an older macOS SDK/deployment target while still producing native Apple Silicon binaries. These are the components most likely to be useful on an Apple Silicon Mac.
+
+### `buildpackages` itself works on Apple Silicon
+
+Extraction is architecture-independent: `hdiutil` (for the old `.dmg`) and `xip`/Archive Utility (for the `.xip` archives) run fine on Apple Silicon, so `./XcodeLegacy.sh buildpackages` can produce every SDK tarball on an Apple Silicon Mac. It is the *install* and *use* of the Intel/PPC compilers and 10.x SDKs -- not their extraction -- that is limited.
+
+### Note on legacy Xcode download links
+
+All the download links in this document point to `download.developer.apple.com` and still require you to [sign in to Apple Developer](https://developer.apple.com/downloads/) first. These are the canonical URLs (cross-checked against [xcodereleases.com](https://xcodereleases.com/)). Two known blockers when installing old Xcode:
+
+- Xcode releases from before 26.03.2012 may fail to install with "An unknown installation error" because of an expired certificate (see the note at the end of "Note on Xcode versions").
+- Xcode 8.2.1, 8.3.3 and 9.4.1 archives downloaded before 24.10.2019 have an expired signature and Archive Utility will refuse to unpack them; re-download the current archives (XcodeLegacy detects this and prompts you).
+
+
+Upgrading XcodeLegacy for a new Xcode / SDK version
+---------------------------------------------------
+
+Each new major Xcode drops the oldest bundled macOS SDK. XcodeLegacy's job is to grab that dropped SDK from the last Xcode that shipped it. When a new Xcode removes an SDK you still need, add support like this. The naming convention below matches the existing code.
+
+**0. Find the mapping.** Determine which macOS SDK the new Xcode removed and which older Xcode is the last one that still bundles it. [xcodereleases.com](https://xcodereleases.com/) (also available as `https://xcodereleases.com/data.json`) lists, for every release, its bundled `macOS` SDK, its exact `download` URL, and the minimum macOS required to run it. As of Xcode 16 the mapping is:
+
+| Source Xcode | Bundled macOS SDK | Option added |
+|--------------|-------------------|--------------|
+| 11.7         | 10.15             | `-osx1015`   |
+| 12.5.1       | 11 (Big Sur)      | `-osx11`     |
+| 13.4.1       | 12 (Monterey)     | `-osx12`     |
+| 14.3.1       | 13 (Ventura)      | `-osx13`     |
+| 15.4         | 14 (Sonoma)       | `-osx14`     |
+| 16.4         | 15 (Sequoia)      | `-osx15`     |
+
+So, e.g., to add the macOS 16 SDK once a future Xcode drops it, you would extract it from Xcode 16.4 (or whichever release last bundles it).
+
+**1. Add the option flag.** In `XcodeLegacy.sh`, near the top add an initializer `osxNN=0` (use `osx11`-style names for macOS 11+, `osx10NN` for 10.x). Add a matching `-osxNN)` case in the argument-parsing `while` loop (set `osxNN=1; gotoption=1; shift`), add `osxNN=1` to the "no option given -> do everything" block, and add the option to the two usage `echo` lines and the SDK list.
+
+**2. Add the source-Xcode gate.** Add a gate variable next to the others:
+```sh
+xcNN="$(( osxMM != 0 ))"
+```
+where `xcNN` is the *source* Xcode major version and `osxMM` is the SDK option it provides (e.g. `xc16="$(( osx15 != 0 ))"`).
+
+**3. Add the download check** (PHASE 1, `buildpackages`), mirroring the existing blocks:
+```sh
+if [ "$xcNN" = 1 ] && [ ! -f Xcode_X.Y.Z.xip ]; then
+    echo "*** You should download Xcode X.Y.Z ..."
+    ...
+    missingdmg=1
+fi
+```
+Also add `$xcNN` to the "stray Xcode.app" guard for `.xip`-based sources.
+
+**4. Add the extraction** (still PHASE 1). Modern Xcode ships one universal SDK reachable via the `SDKs/MacOSX.sdk` symlink; rename it to a version-stamped directory and tar it:
+```sh
+if [ "$xcNN" = 1 ]; then
+    if [ "$osxMM" = 1 ]; then
+        open Xcode_X.Y.Z.xip
+        while [ ! -d Xcode.app ]; do sleep 5; done
+        sleep 5
+        ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; \
+           rm -f SDKs/MacOSXNN.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSXNN.sdk; \
+           tar cf - SDKs/MacOSXNN.sdk) | gzip -c > XcodeNNSDK.tar.gz )
+        rm -rf Xcode.app
+    fi
+fi
+```
+The tarball name `XcodeNNSDK.tar.gz` must match what `installSDK` expects (it derives it from the SDK version with the dot removed).
+
+**5. Add the install call** (PHASE 2, `install`): `if [ "$osxMM" = 1 ]; then installSDK NN; fi`. The shared `installSDK` helper handles the rest (skips if already installed, drops a `legacy` marker file used by uninstall).
+
+**6. Add cleanup** (PHASE 3, `cleanpackages`): `if [ "$osxMM" = 1 ]; then rm XcodeNNSDK.tar.gz 2>/dev/null; fi`.
+
+**7. Add uninstall** (PHASE 4, `uninstall`):
+```sh
+if [ "$osxMM" = 1 ]; then
+    i=NN
+    [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+fi
+```
+
+**8. Update docs and validate.** Update this README (intro list, options, history) and run `shellcheck XcodeLegacy.sh` and `bash -n XcodeLegacy.sh`. You can smoke-test the plumbing without downloading multi-GB archives by running the script from an empty directory: `./XcodeLegacy.sh -osxMM buildpackages` should ask for exactly the right source Xcode and then exit.
+
+Note: SDKs shipped by Xcode 12.2+ are universal (`arm64`+`x86_64`); the 10.x SDKs from the old `.dmg`/`.xip` archives are Intel/PPC-only (see the Apple Silicon section above).
 
 
 Known bugs (and fixes) in OS X SDKs
@@ -232,3 +353,4 @@ History
 - 2.4 (10/02/2020): Fix for buildpackages if Xcode 8 or Xcode 9 xip have expired signatures. Also now check for stray Xcode.app if extracting Xcode 9.4.1, Fixes for changed download paths and archive names.
 - 2.5 (31/04/2021): Xcode 11 dropped 10.14 SDK, get it from Xcode 10.3
 - 2.6 (01/05/2021): Xcode 12 dropped 10.15 SDK, get it from Xcode 11.7
+- 2.7 (23/07/2026): Support macOS 11-15 SDKs (from Xcode 12.5.1, 13.4.1, 14.3.1, 15.4, 16.4); add `-osx11`/`-osx12`/`-osx13`/`-osx14`/`-osx15` options; document Apple Silicon (arm64) behavior and how to upgrade the script; fix shellcheck warnings and a bug where the Xcode 4.6.3 archive named `xcode4630916281a.dmg` was not detected during buildpackages
