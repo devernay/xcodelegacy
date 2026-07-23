@@ -215,7 +215,11 @@ Extraction is architecture-independent: `hdiutil` (for the old `.dmg`) and `xip`
 
 ### Note on legacy Xcode download links
 
-All the download links in this document point to `download.developer.apple.com` and still require you to [sign in to Apple Developer](https://developer.apple.com/downloads/) first. These are the canonical URLs (cross-checked against [xcodereleases.com](https://xcodereleases.com/)). Two known blockers when installing old Xcode:
+All the download links in this document (and in `XcodeLegacy.sh`) point to `download.developer.apple.com` and still require you to [sign in to Apple Developer](https://developer.apple.com/downloads/) first. These are the canonical URLs, cross-checked against [xcodereleases.com](https://xcodereleases.com/).
+
+**If a download link is rejected or a download fails, look up the current URL on [xcodereleases.com](https://xcodereleases.com/)** (also available in machine-readable form at [`https://xcodereleases.com/data.json`](https://xcodereleases.com/data.json), which lists, for every release, its exact `download` URL, its bundled `macOS` SDK, and the minimum macOS required to run it). Apple occasionally changes archive names -- for example, Xcode 26 and later ship as `Xcode_<ver>_Universal.xip` and `Xcode_<ver>_Apple_silicon.xip` rather than the older single `Xcode_<ver>.xip`.
+
+Two known blockers when installing old Xcode:
 
 - Xcode releases from before 26.03.2012 may fail to install with "An unknown installation error" because of an expired certificate (see the note at the end of "Note on Xcode versions").
 - Xcode 8.2.1, 8.3.3 and 9.4.1 archives downloaded before 24.10.2019 have an expired signature and Archive Utility will refuse to unpack them; re-download the current archives (XcodeLegacy detects this and prompts you).
