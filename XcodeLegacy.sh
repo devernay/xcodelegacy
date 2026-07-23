@@ -34,10 +34,12 @@
 # 2.6 (01/05/2021): Xcode 12 dropped 10.15 SDK, get it from Xcode 11.7
 # 2.7 (23/07/2026): Support SDKs from Xcode 12-16: macOS 11 (Xcode 12.5.1),
 #                   macOS 12 (Xcode 13.4.1), macOS 13 (Xcode 14.3.1),
-#                   macOS 14 (Xcode 15.4) and macOS 15 (Xcode 16.4).
-#                   Also fix several shellcheck warnings and a bug where the
-#                   Xcode 4.6.3 archive named xcode4630916281a.dmg was not
-#                   detected during buildpackages.
+#                   macOS 14 (Xcode 15.4) and macOS 15 (Xcode 16.4), plus
+#                   macOS 26 Tahoe (Xcode 26.x -- Apple jumped from Xcode 16
+#                   to the year-based Xcode 26, so there is no Xcode 17-25 or
+#                   macOS 16-25). Also fix several shellcheck warnings and a
+#                   bug where the Xcode 4.6.3 archive named
+#                   xcode4630916281a.dmg was not detected during buildpackages.
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -61,6 +63,7 @@ osx12=0
 osx13=0
 osx14=0
 osx15=0
+osx26=0
 gotoption=0
 error=0
 CUSTOM_APP=""
@@ -158,6 +161,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+        -osx26)
+            osx26=1
+            gotoption=1
+            shift
+            ;;
         -path=*)
             CUSTOM_APP="${1#*=}"
             shift
@@ -189,20 +197,21 @@ if [ $gotoption = 0 ]; then
     osx13=1
     osx14=1
     osx15=1
+    osx26=1
 fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013|-osx1014|-osx1015|-osx11|-osx12|-osx13|-osx14|-osx15] [-path=/path/to/XcodeXXX.app] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013|-osx1014|-osx1015|-osx11|-osx12|-osx13|-osx14|-osx15|-osx26] [-path=/path/to/XcodeXXX.app] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
     echo "from Xcode 3.2.6, 4.6.3, 5.1.1, 6.4, 7.3.1, 8.3.3, 9.4.1, 10.3, 11.7, 12.5.1,"
-    echo "13.4.1, 14.3.1, 15.4 and 16.4 which are not available in recent Xcode:"
+    echo "13.4.1, 14.3.1, 15.4, 16.4 and 26.x which are not available in recent Xcode:"
     echo " - PPC assembler and linker"
     echo " - GCC 4.0 and 4.2 compilers and Xcode plugins"
     echo " - LLVM-GCC 4.2 compiler and Xcode plugin (Xcode >= 5)"
-    echo " - Mac OS X SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13,"
-    echo "   10.14, 10.15, 11, 12, 13, 14, 15"
+    echo " - Mac OS X / macOS SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12,"
+    echo "   10.13, 10.14, 10.15, 11, 12, 13, 14, 15, 26"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default"
     echo "everything is done):"
@@ -225,6 +234,7 @@ if [ $# != 1 ]; then
     echo " -osx13     : only install macOS 13 (Ventura) SDK"
     echo " -osx14     : only install macOS 14 (Sonoma) SDK"
     echo " -osx15     : only install macOS 15 (Sequoia) SDK"
+    echo " -osx26     : only install macOS 26 (Tahoe) SDK"
     echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
     echo "              e.g. -path=/Application/Xcode_8.3.1.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
@@ -297,6 +307,7 @@ xc13="$(( osx12 != 0 ))"
 xc14="$(( osx13 != 0 ))"
 xc15="$(( osx14 != 0 ))"
 xc16="$(( osx15 != 0 ))"
+xc26="$(( osx26 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -326,6 +337,12 @@ case $1 in
         #
         missingdmg=0
         # note: Xcode links from http://stackoverflow.com/questions/10335747/how-to-download-xcode-4-5-6-7-and-get-the-dmg-file/10335943#10335943
+        # The canonical, up-to-date source for every Xcode download URL is
+        # xcodereleases.com (machine-readable at https://xcodereleases.com/data.json,
+        # which lists each release's "download" URL and bundled "macOS" SDK).
+        # If any download link below is rejected or a download fails, look up
+        # the current URL there (Apple occasionally changes archive names, e.g.
+        # Xcode 26+ ships as Xcode_<ver>_Universal.xip / _Apple_silicon.xip).
         if [ "$xc3" = 1 ] && [ ! -f xcode_3.2.6_and_ios_sdk_4.3.dmg ]; then
             echo "*** You should download Xcode 3.2.6. Login to:"
             echo " https://developer.apple.com/downloads/"
@@ -490,11 +507,33 @@ case $1 in
             echo "and then run this script from within the same directory as the downloaded file"
             missingdmg=1
         fi
+        # Xcode 26 and later use year-based version numbers (Apple jumped from
+        # Xcode 16 to Xcode 26) and are distributed under two archive names:
+        # Xcode_<ver>_Universal.xip and Xcode_<ver>_Apple_silicon.xip. Any
+        # Xcode 26.x bundles the macOS 26 (Tahoe) SDK; prefer the Universal
+        # archive (its SDK is guaranteed universal arm64+x86_64).
+        if [ "$xc26" = 1 ]; then
+            xcode26archive=""
+            for f in Xcode_26*_Universal.xip Xcode_26*_Apple_silicon.xip Xcode_26*.xip; do
+                if [ -f "$f" ]; then
+                    xcode26archive="$f"
+                    break
+                fi
+            done
+            if [ -z "$xcode26archive" ]; then
+                echo "*** You should download Xcode 26.x (provides the macOS 26 Tahoe SDK). Login to:"
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from (Universal variant recommended):"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_26.6/Xcode_26.6_Universal.xip"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            fi
+        fi
         if [ "$missingdmg" = 1 ]; then
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
-        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ] || [ "$xc12" = 1 ] || [ "$xc13" = 1 ] || [ "$xc14" = 1 ] || [ "$xc15" = 1 ] || [ "$xc16" = 1 ]; then
+        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ] || [ "$xc12" = 1 ] || [ "$xc13" = 1 ] || [ "$xc14" = 1 ] || [ "$xc15" = 1 ] || [ "$xc16" = 1 ] || [ "$xc26" = 1 ]; then
             if [ -e Xcode.app ]; then
                 echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
                 exit
@@ -877,6 +916,18 @@ EOF
                 done
                 sleep 5
                 ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX15.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX15.sdk; tar cf - SDKs/MacOSX15.sdk) | gzip -c > Xcode15SDK.tar.gz) && echo "*** Created Xcode15SDK.tar.gz in directory $(pwd)"
+                rm -rf Xcode.app
+            fi
+        fi
+        if [ "$xc26" = 1 ]; then
+            if [ "$osx26" = 1 ]; then
+                echo "Extracting macOS 26 (Tahoe) SDK from $xcode26archive. Be patient - this will take some time"
+                open "$xcode26archive"
+                while [ ! -d Xcode.app ]; do
+                    sleep 5
+                done
+                sleep 5
+                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX26.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX26.sdk; tar cf - SDKs/MacOSX26.sdk) | gzip -c > Xcode26SDK.tar.gz) && echo "*** Created Xcode26SDK.tar.gz in directory $(pwd)"
                 rm -rf Xcode.app
             fi
         fi
@@ -1321,6 +1372,10 @@ SPEC_EOF
             installSDK 15
         fi
 
+        if [ "$osx26" = 1 ]; then
+            installSDK 26
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1473,6 +1528,9 @@ SPEC_EOF
         if [ "$osx15" = 1 ]; then
             rm Xcode15SDK.tar.gz 2>/dev/null
         fi
+        if [ "$osx26" = 1 ]; then
+            rm Xcode26SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -1616,6 +1674,10 @@ SPEC_EOF
         fi
         if [ "$osx15" = 1 ]; then
             i=15
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+        if [ "$osx26" = 1 ]; then
+            i=26
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         
