@@ -728,11 +728,15 @@ EOF
 
                 if [ "$osx105" = 1 ]; then
                     # we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
+                    # Do this by combining it with the PowerPC64 library from the 10.5 SDK so it doesn't break PowerPC64 builds.
                     # This should fix compiling the following:
                     # int main() { __uint128_t a = 100; __uint128_t b = 200; __uint128_t c = a / b; return 0; }
                     # with clang -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 conftest1.c
-                    cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
-                    cp $SDKROOT/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
+                    (cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/ &&
+                    cp libgcc_s.10.5.dylib libgcc_s.10.5.dylib.bak &&
+                    lipo libgcc_s.10.5.dylib.bak -extract ppc64 -output _ppc64.dylib &&
+                    lipo -create $SDKROOT/usr/lib/libgcc_s.10.5.dylib _ppc64.dylib -output libgcc_s.10.5.dylib &&
+                    rm _ppc64.dylib)
 
                     ( (cd /tmp/XC3-10.5 || exit; tar cf - SDKs/MacOSX10.5.sdk) | gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory $(pwd)"
                 fi
