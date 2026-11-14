@@ -143,6 +143,17 @@ The script also fixes the Mac OS X 10.4 SDK so that it works with GCC 4.2 and LL
 
 PowerPC architectures (ppc, ppc7400, ppc970, ppc64) cannot be linked for OS X 10.7 or newer (they would be useless anyway, since PowerPC CPUs were only supported up to 10.5).
 
+### Building PPC and i386 from the Xcode 12 IDE
+
+The GCC Xcode plugins cannot be used with Xcode 10 and later, but [issue #68](https://github.com/devernay/xcodelegacy/issues/68) (by @kspes) describes how to build `ppc`, `i386` and `x86_64` binaries targeting OS X 10.4 from the Xcode 12 IDE, using manual changes and wrapper scripts that are not part of XcodeLegacy:
+
+- re-enable the `i386` architecture (`DeprecatedError = NO` in `IDEOSXSupportCore.ideplugin/.../MacOSX Architectures.xcspec`);
+- use the Xcode 3.2.6 `i386` assembler from GCC 4.2, to avoid link errors;
+- merge the `ppc` slice of GCC 4.0's `crt3.o` into GCC 4.2's one, to get G3-compatible (`ppc`) rather than G4-only (`ppc7400`) binaries;
+- wrap `g++-4.2` (Xcode 12 calls it with `-target` instead of `-arch` when linking, causing "Bus error: 10") and `libtool` (which merges `ppc` and `ppc7400` slices) with the scripts attached to the issue.
+
+These are unsupported hacks, tested by their author on Xcode 12 on an Intel Mac. Back up Xcode before trying them.
+
 
 Note on Xcode versions
 ----------------------
