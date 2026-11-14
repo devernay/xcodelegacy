@@ -11,6 +11,15 @@
 # - Nick Beadman <nbeadman@gmail.com> / <nbeadman@github>
 # - Nathan Blais <NathanBlais@github>
 # - Alan Staniforth <apollonia.uk@gmail.com>
+# - Jens Sandsgaard
+# - nickwww <nickwww@github>
+# - Patrik Rak <raxoft@github>
+# - Pedro Vieira <pedrovieira@github>
+# - John Whitlock <jwhitlock@github>
+# - Maxime Viargues
+# - Damien Calesse <kranack@github>
+# - Jens Nerup <barkoded@github>
+# - AliceLR <AliceLR@github>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -60,6 +69,8 @@
 #                   - uninstall no longer mistakes Xcode >= 10 for Xcode 4
 #                   - explain how to provide /Developer/SDKs on read-only
 #                     system volumes (macOS >= 10.15)
+#                   - 10.5 SDK: keep the ppc64 slice of libgcc_s.10.5.dylib
+#                     (AliceLR, #74); use xip --expand (Eric Knibbe, #71)
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
