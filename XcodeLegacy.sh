@@ -20,6 +20,7 @@
 # - Damien Calesse <kranack@github>
 # - Jens Nerup <barkoded@github>
 # - AliceLR <AliceLR@github>
+# - trissylegs <trissylegs@github>
 #
 # License: Creative Commons BY-NC-SA 3.0 http://creativecommons.org/licenses/by-nc-sa/3.0/
 #
@@ -71,6 +72,14 @@
 #                     system volumes (macOS >= 10.15)
 #                   - 10.5 SDK: keep the ppc64 slice of libgcc_s.10.5.dylib
 #                     (AliceLR, #74); use xip --expand (Eric Knibbe, #71)
+# 2.9 (14/11/2026): - do not install the GCC Xcode plugins on Xcode 10-12, they break
+#                     every build with the new build system (#49)
+#                   - ld wrapper: only use the old ld for Intel archs if both the
+#                     target and the SDK are <= 10.6 (fixes "ld: warning: bad
+#                     symbol action" with recent SDKs, #54), and also detect the
+#                     target from -macosx_version_min / -platform_version
+#                   - look for hashtable-gcc-4.0.4 next to the script, and fail
+#                     if it is missing instead of producing unfixed SDKs (#70)
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -311,6 +320,10 @@ else
     fi
 fi
 REQUESTEDAPP="$XCODEAPP"
+# Files shipped with XcodeLegacy.sh are looked up next to the script, so it can
+# be run from the directory containing the Xcode archives (issue #70).
+SCRIPTDIR="$(cd "$(dirname "$0")" && pwd)"
+HASHTABLE="$SCRIPTDIR/hashtable-gcc-4.0.4"
 XCODE42=0
 PLUGINDIR="$XCODEAPP/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
 GCCDIR="$XCODEAPP/Contents/Developer"
@@ -506,6 +519,13 @@ case $1 in
         # PHASE 1: PACKAGING
         #
         missingdmg=0
+        if [ "$(( osx104 + osx105 + osx106 ))" != 0 ] && [ ! -f "$HASHTABLE" ]; then
+            echo "*** Error: $HASHTABLE is missing. It is distributed with XcodeLegacy.sh,"
+            echo "and is needed to fix the 10.4, 10.5 and 10.6 SDKs: download it from"
+            echo " https://raw.githubusercontent.com/devernay/xcodelegacy/master/hashtable-gcc-4.0.4"
+            echo "and put it next to $0"
+            exit 1
+        fi
         # note: Xcode links from http://stackoverflow.com/questions/10335747/how-to-download-xcode-4-5-6-7-and-get-the-dmg-file/10335943#10335943
         # The canonical, up-to-date source for every Xcode download URL is
         # xcodereleases.com (machine-readable at https://xcodereleases.com/data.json,
@@ -854,7 +874,7 @@ EOF
                 # in SDKs/MacOSX10.4u.sdk/usr/include/c++/4.0.0/tr1/hashtable
                 #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
                 mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
-                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
+                cp "$HASHTABLE" $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
 
                 # Add links for compatibility with GCC 4.2
                 ln -s 4.0.1 $SDKROOT/usr/lib/gcc/i686-apple-darwin10/4.2.1
@@ -886,7 +906,7 @@ EOF
                 # this also affects g++-4.2, since usr/include/c++/4.2.1 links to usr/include/c++/4.0.0
                 #(cd $SDKROOT/usr/include/c++/4.0.0/tr1 || exit; patch -p0 -d. < /tmp/hashtable.patch)
                 mv $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable.orig
-                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
+                cp "$HASHTABLE" $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
             fi
 
             if [ "$osx104" = 1 ] || [ "$osx105" = 1 ]; then
@@ -904,7 +924,7 @@ EOF
                 ln -s libstdc++.6.dylib $SDKROOT/usr/lib/libstdc++.dylib
 
                 # fix buggy hashtable include (see above for explanations)
-                cp hashtable-gcc-4.0.4 $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
+                cp "$HASHTABLE" $SDKROOT/usr/include/c++/4.0.0/tr1/hashtable
 
                 if [ "$osx105" = 1 ]; then
                     # we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
@@ -1064,9 +1084,12 @@ EOF
         fi
         if [ "$compilers" = 1 ]; then
             # Xcode 4.x-9.x load the GCC plugins from Xcode3Core.ideplugin. Xcode 10
-            # and later (new build system) removed it: the compilers can then only
-            # be used from the command line, e.g. CC=gcc-4.2 or xcodebuild CC=...
-            if [ -d "$PLUGINDIR" ]; then
+            # to 12 still have that directory, but their new build system fails on
+            # every build when the GCC plugins are installed (issue #49), and Xcode
+            # 13 and later removed it: the compilers can then only be used from the
+            # command line, e.g. CC=gcc-4.2 or xcodebuild CC=...
+            # (XCODEMAJOR is 0 for Xcode <= 4.2, which has no version check here)
+            if [ -d "$PLUGINDIR" ] && [ "$XCODEMAJOR" -lt 10 ]; then
                 if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
                     echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
                 else
@@ -1105,8 +1128,9 @@ EOF
                     (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
                 fi
             else
-                echo "*** Info: Xcode $XCODEMAJOR does not support compiler plugins (no $PLUGINDIR),"
-                echo "not installing the GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins."
+                echo "*** Info: Xcode $XCODEMAJOR cannot use the GCC compiler plugins (Xcode >= 10),"
+                echo "not installing the GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins. Use the"
+                echo "compilers from the command line instead, e.g. CC=gcc-4.2 CXX=g++-4.2"
             fi
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
@@ -1259,44 +1283,69 @@ AS_EOF
 
 ARCH=''
 ARCH_FOUND=0
+TARGET=''
+SYSLIBROOT=''
+PREV=''
+PREV2=''
 for var in "\$@"
 do
-        if [ "\$ARCH_FOUND" -eq '1' ]; then
-                ARCH=\$var
-                ARCH_FOUND=2
-                break
-        else
-                case "\$var" in
-                        -mmacosx-version-min=10.[0-6])
-                                MACOSX_DEPLOYMENT_TARGET=\$( echo \$var | sed -e s/-mmacosx-version-min=// )
-                                ;;
-                        -arch)
-                                if [ "\$ARCH_FOUND" -ne '0' ]; then
-                                        echo "Warning: ld: multiple -arch flags"
-                                fi
-                                ARCH_FOUND=1
-                                ;;
-                esac
+        case "\$PREV" in
+                -arch)
+                        if [ "\$ARCH_FOUND" -ne '0' ]; then
+                                echo "Warning: ld: multiple -arch flags"
+                        else
+                                ARCH="\$var"
+                        fi
+                        ARCH_FOUND=1
+                        ;;
+                -macosx_version_min)
+                        # passed by gcc and older clang
+                        TARGET="\$var"
+                        ;;
+                -syslibroot)
+                        SYSLIBROOT="\$var"
+                        ;;
+        esac
+        # "-platform_version macos <min> <sdk>", passed by recent clang
+        if [ "\$PREV2" = '-platform_version' ] && [ "\$PREV" = 'macos' ]; then
+                TARGET="\$var"
         fi
+        case "\$var" in
+                -mmacosx-version-min=*)
+                        TARGET="\${var#-mmacosx-version-min=}"
+                        ;;
+        esac
+        PREV2="\$PREV"
+        PREV="\$var"
 done
+# MACOSX_DEPLOYMENT_TARGET can also be set externally as an env variable
+if [ -z "\$TARGET" ]; then
+        TARGET="\${MACOSX_DEPLOYMENT_TARGET:-}"
+fi
+# same for the SDK (SDKROOT, as in the README examples)
+if [ -z "\$SYSLIBROOT" ]; then
+        SYSLIBROOT="\${SDKROOT:-}"
+fi
 
-# use the old (Snow Leopard 10.6) ld only if ppc arch or the target macOS is <= 10.6
+# Use the old (Snow Leopard 10.6) ld for ppc archs. Recent ld versions cannot
+# always link i386/x86_64 for OS X <= 10.6 either (issue #30), but the old ld
+# does not understand recent SDKs ("ld: warning: bad symbol action", issue
+# #54), so for Intel archs only use it if both the target and the SDK are <= 10.6.
 USE_OLD_LD=0
 case "\$ARCH" in
         ppc*) #ppc ppc7400 ppc970 ppc64
                 USE_OLD_LD=1
                 ;;
 esac
-
-if [ -n \${MACOSX_DEPLOYMENT_TARGET+x} ]; then
-        # MACOSX_DEPLOYMENT_TARGET can either be set externally as an env variable,
-        # or as an ld option using -mmacosx-version-min=10.x
-        case "\${MACOSX_DEPLOYMENT_TARGET}" in
-                10.[0-6])
-                        USE_OLD_LD=1
-                        ;;
-        esac
-fi
+case "\$TARGET" in
+        10.[0-6]|10.[0-6].*)
+                case "\${SYSLIBROOT%/}" in
+                        *MacOSX10.[4-6].sdk|*MacOSX10.4u.sdk)
+                                USE_OLD_LD=1
+                                ;;
+                esac
+                ;;
+esac
 
 #echo "Running ld for \$ARCH ..."
 
