@@ -40,6 +40,26 @@
 #                   macOS 16-25). Also fix several shellcheck warnings and a
 #                   bug where the Xcode 4.6.3 archive named
 #                   xcode4630916281a.dmg was not detected during buildpackages.
+# 2.8 (14/11/2026): Support macOS 15 Sequoia and later hosts, and Xcode 16-27:
+#                   - add the macOS 27 SDK (Xcode 27.x)
+#                   - install no longer aborts on Xcode >= 10 (no Xcode3Core
+#                     plugin dir): GCC Xcode plugins and the PPC architecture
+#                     spec are skipped, compilers are installed as command-line
+#                     tools, and SDKs are installed as before
+#                   - fall back to "xcode-select -p" when /Applications/Xcode.app
+#                     does not exist (e.g. /Applications/Xcode_16.4.app)
+#                   - expand .xip archives with "xip --expand" instead of
+#                     opening Archive Utility and polling, and handle
+#                     Xcode-beta.app and MacOSX.sdk being a symlink
+#                   - the ld wrapper no longer executes ld's stdout as a command
+#                     (broke "ld -version_details", used by Xcode >= 15), and
+#                     the as/ld wrappers support Xcode paths containing spaces
+#                   - check that the Xcode bundle is writable (macOS App
+#                     Management protection) and that Rosetta is installed on
+#                     Apple silicon (the legacy compilers are Intel/PPC binaries)
+#                   - uninstall no longer mistakes Xcode >= 10 for Xcode 4
+#                   - explain how to provide /Developer/SDKs on read-only
+#                     system volumes (macOS >= 10.15)
 
 #set -e # Exit immediately if a command exits with a non-zero status
 #set -u # Treat unset variables as an error when substituting.
@@ -64,6 +84,7 @@ osx13=0
 osx14=0
 osx15=0
 osx26=0
+osx27=0
 gotoption=0
 error=0
 CUSTOM_APP=""
@@ -166,6 +187,11 @@ while [[ $error = 0 ]] && [[ $# -gt 1 ]]; do
             gotoption=1
             shift
             ;;
+        -osx27)
+            osx27=1
+            gotoption=1
+            shift
+            ;;
         -path=*)
             CUSTOM_APP="${1#*=}"
             shift
@@ -198,20 +224,22 @@ if [ $gotoption = 0 ]; then
     osx14=1
     osx15=1
     osx26=1
+    osx27=1
 fi
 
 if [ $# != 1 ]; then
     #     ################################################################################ 80 cols
-    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013|-osx1014|-osx1015|-osx11|-osx12|-osx13|-osx14|-osx15|-osx26] [-path=/path/to/XcodeXXX.app] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
+    echo "Usage: $0 [-compilers|-osx104|-osx105|-osx106|-osx107|-osx108|-osx109|-osx1010|-osx1011|-osx1012|-osx1013|-osx1014|-osx1015|-osx11|-osx12|-osx13|-osx14|-osx15|-osx26|-osx27] [-path=/path/to/XcodeXXX.app] buildpackages|install|installbeta|cleanpackages|uninstall|uninstallbeta"
     echo ""
     echo "Description: Extracts / installs / cleans / uninstalls the following components"
     echo "from Xcode 3.2.6, 4.6.3, 5.1.1, 6.4, 7.3.1, 8.3.3, 9.4.1, 10.3, 11.7, 12.5.1,"
-    echo "13.4.1, 14.3.1, 15.4, 16.4 and 26.x which are not available in recent Xcode:"
+    echo "13.4.1, 14.3.1, 15.4, 16.4, 26.x and 27.x which are not available in recent"
+    echo "Xcode (works on macOS hosts up to macOS 27, and Xcode up to 27):"
     echo " - PPC assembler and linker"
     echo " - GCC 4.0 and 4.2 compilers and Xcode plugins"
     echo " - LLVM-GCC 4.2 compiler and Xcode plugin (Xcode >= 5)"
     echo " - Mac OS X / macOS SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12,"
-    echo "   10.13, 10.14, 10.15, 11, 12, 13, 14, 15, 26"
+    echo "   10.13, 10.14, 10.15, 11, 12, 13, 14, 15, 26, 27"
     echo ""
     echo "An optional first argument may be provided to limit the operation (by default"
     echo "everything is done):"
@@ -235,8 +263,10 @@ if [ $# != 1 ]; then
     echo " -osx14     : only install macOS 14 (Sonoma) SDK"
     echo " -osx15     : only install macOS 15 (Sequoia) SDK"
     echo " -osx26     : only install macOS 26 (Tahoe) SDK"
-    echo " -path=path : A alternative Xcode folder to use. Default is /Application/Xcode.app"
-    echo "              e.g. -path=/Application/Xcode_8.3.1.app"
+    echo " -osx27     : only install macOS 27 SDK"
+    echo " -path=path : An alternative Xcode folder to use. Default is"
+    echo "              /Applications/Xcode.app or, if it does not exist, the Xcode"
+    echo "              selected by xcode-select, e.g. -path=/Applications/Xcode_16.4.app"
     echo "Note that these can be combined. For example, to build and install the 10.9"
     echo "and 10.10 SDKs, one could execute:"
     echo " $ $0 -osx109 -osx1010 buildpackages"
@@ -258,7 +288,18 @@ elif [ "$1" = "installbeta" ] || [ "$1" = "uninstallbeta" ]; then
     XCODEAPP="/Applications/Xcode-beta.app"
 else
     XCODEAPP="/Applications/Xcode.app"
+    if [ ! -d "$XCODEAPP" ]; then
+        # CI images and multi-Xcode setups often only have e.g.
+        # /Applications/Xcode_16.4.app: use the Xcode chosen by xcode-select.
+        selected="$(xcode-select -p 2>/dev/null)"
+        case "$selected" in
+            *.app/Contents/Developer)
+                XCODEAPP="${selected%/Contents/Developer}"
+                ;;
+        esac
+    fi
 fi
+REQUESTEDAPP="$XCODEAPP"
 XCODE42=0
 PLUGINDIR="$XCODEAPP/Contents/PlugIns/Xcode3Core.ideplugin/Contents/SharedSupport/Developer/Library/Xcode/Plug-ins"
 GCCDIR="$XCODEAPP/Contents/Developer"
@@ -274,8 +315,17 @@ else
         XCODE42=1
         echo "*** Info: found Xcode <= 4.2.1 in $XCODEAPP"
     else
-        echo "*** Info: could not find Xcode 4.2 in /Developer/Applications nor Xcode >= 4.3 in /Applications"
+        echo "*** Info: could not find Xcode >= 4.3 in $REQUESTEDAPP nor Xcode <= 4.2 in /Developer/Applications"
     fi
+fi
+# Major version of the target Xcode (0 if unknown), e.g. 16 for Xcode 16.4.
+XCODEMAJOR=0
+if [ -f "$XCODEAPP/Contents/Info.plist" ]; then
+    xcodeversion="$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$XCODEAPP/Contents/Info.plist" 2>/dev/null)"
+    XCODEMAJOR="${xcodeversion%%.*}"
+    case "$XCODEMAJOR" in
+        ''|*[!0-9]*) XCODEMAJOR=0 ;;
+    esac
 fi
 PLATFORMDIR="$GCCDIR/Platforms/MacOSX.platform"
 GCCINSTALLDIR="$GCCDIR/Toolchains/XcodeDefault.xctoolchain"
@@ -308,6 +358,7 @@ xc14="$(( osx13 != 0 ))"
 xc15="$(( osx14 != 0 ))"
 xc16="$(( osx15 != 0 ))"
 xc26="$(( osx26 != 0 ))"
+xc27="$(( osx27 != 0 ))"
 
 # The sole argument is the macOS version (e.g. 10.12)
 installSDK() {
@@ -319,7 +370,8 @@ installSDK() {
         if [ -f "Xcode${macosnodot}SDK.tar.gz" ]; then
             (gzip -dc "Xcode${macosnodot}SDK.tar.gz" | (cd "$SDKDIR" || exit; tar xf -)) && echo "*** installed Xcode${macosnodot}SDK.tar.gz"
         elif [ -f "MacOSX${macos}.sdk.tar.xz" ]; then
-            (gzip -dc "MacOSX${macos}.sdk.tar.xz" | (cd "$SDKDIR/SDKs" || exit; tar xf -)) && echo "*** installed MacOSX${macos}.sdk.tar.xz"
+            # gzip cannot decompress xz: let tar (bsdtar) detect the format
+            (cd "$SDKDIR/SDKs" || exit; tar xf -) < "MacOSX${macos}.sdk.tar.xz" && echo "*** installed MacOSX${macos}.sdk.tar.xz"
         else
             echo "*** Could not install MacOSX${macos}.sdk"
             echo "*** Before installing:"
@@ -328,6 +380,113 @@ installSDK() {
         fi
         touch "$SDKDIR/SDKs/MacOSX${macos}.sdk/legacy"
     fi
+}
+
+# Print the newest Xcode_<major>*.xip in the current directory (e.g.
+# Xcode_26.6_Universal.xip rather than Xcode_26.1_Universal.xip; at the same
+# version, prefer the _Universal archive). Prints nothing if none is found.
+findXip() {
+    best=""
+    bestkey=""
+    for f in Xcode_"$1"*.xip; do
+        [ -f "$f" ] || continue
+        v="${f#Xcode_}"
+        v="${v%%[!0-9.]*}"
+        key="$(echo "$v" | awk -F. '{printf "%05d%05d%05d", $1, $2, $3}')"
+        case "$f" in
+            *_Universal.xip) key="${key}2" ;;
+            *_Apple_silicon.xip) key="${key}1" ;;
+            *) key="${key}0" ;;
+        esac
+        if [ -z "$bestkey" ] || [ "$key" \> "$bestkey" ]; then
+            best="$f"
+            bestkey="$key"
+        fi
+    done
+    echo "$best"
+}
+
+# Extract the macOS SDK from an Xcode .xip archive (Xcode >= 8) into
+# Xcode<NN>SDK.tar.gz, where NN is the version without dots.
+# Arguments: archive, macOS version (e.g. 10.12 or 15), description.
+extractSDKFromXip() {
+    archive="$1"
+    macos="$2"
+    macosnodot="${macos//./}"
+    echo "Extracting $3 SDK from $archive. Be patient - this will take some time"
+    if [ -x /usr/bin/xip ]; then
+        # xip expands synchronously into the current directory, and also
+        # works over ssh / without a GUI session (unlike Archive Utility).
+        if ! /usr/bin/xip --expand "$archive"; then
+            echo "*** Error: could not expand $archive"
+            # remove partial output (the stray-app check ensured none existed before)
+            rm -rf Xcode.app Xcode-beta.app
+            rmdir "$MNTDIR" 2>/dev/null
+            exit 1
+        fi
+    else
+        open "$archive"
+        while [ ! -d Xcode.app ] && [ ! -d Xcode-beta.app ]; do
+            sleep 5
+        done
+        sleep 5
+    fi
+    xipapp=""
+    for a in Xcode.app Xcode-beta.app; do
+        if [ -d "$a" ]; then
+            xipapp="$a"
+            break
+        fi
+    done
+    if [ -z "$xipapp" ]; then
+        echo "*** Error: expanding $archive did not produce Xcode.app or Xcode-beta.app"
+        rmdir "$MNTDIR" 2>/dev/null
+        exit 1
+    fi
+    sdkparent="$xipapp/Contents/Developer/Platforms/MacOSX.platform/Developer"
+    # SDKs/MacOSX.sdk is normally the real directory, but may be a symlink to
+    # a versioned SDK (e.g. MacOSX15.5.sdk): rename the real directory.
+    (
+        cd "$sdkparent/SDKs" || exit 1
+        real="$(cd -P MacOSX.sdk && pwd -P)" || exit 1
+        if [ "$(basename "$real")" != "MacOSX${macos}.sdk" ]; then
+            if [ -L "MacOSX${macos}.sdk" ]; then
+                rm -f "MacOSX${macos}.sdk"
+            fi
+            mv "$real" "MacOSX${macos}.sdk"
+        fi
+    ) || { echo "*** Error: could not find the macOS SDK in $archive"; rm -rf "$xipapp"; rmdir "$MNTDIR" 2>/dev/null; exit 1; }
+    if tar -C "$sdkparent" -czf "Xcode${macosnodot}SDK.tar.gz" "SDKs/MacOSX${macos}.sdk"; then
+        echo "*** Created Xcode${macosnodot}SDK.tar.gz in directory $(pwd)"
+    else
+        echo "*** Error: could not create Xcode${macosnodot}SDK.tar.gz"
+        rm -f "Xcode${macosnodot}SDK.tar.gz"
+        rm -rf "$xipapp"
+        rmdir "$MNTDIR" 2>/dev/null
+        exit 1
+    fi
+    rm -rf "$xipapp"
+}
+
+# Since macOS 13, modifying a signed app bundle (such as Xcode) requires the
+# terminal application to have the "App Management" (or "Full Disk Access")
+# permission, even when running as root.
+checkWritable() {
+    probe="$1/.xcodelegacy-write-test"
+    if [ ! -d "$1" ]; then
+        echo "*** Error: could not find Xcode >= 4.3 in $REQUESTEDAPP nor Xcode <= 4.2 in /Developer/Applications"
+        echo "Use -path=/path/to/Xcode.app to select another Xcode."
+        exit 1
+    fi
+    if ! touch "$probe" 2>/dev/null; then
+        echo "*** Error: cannot write into $1"
+        echo "On macOS 13 Ventura and later, the application running this script (e.g."
+        echo "Terminal, iTerm, or sshd-keygen-wrapper for ssh sessions) must be allowed to"
+        echo "modify other applications: open System Settings > Privacy & Security >"
+        echo "App Management (or Full Disk Access), enable it, and run this script again."
+        exit 1
+    fi
+    rm -f "$probe"
 }
 
 case $1 in
@@ -510,16 +669,10 @@ case $1 in
         # Xcode 26 and later use year-based version numbers (Apple jumped from
         # Xcode 16 to Xcode 26) and are distributed under two archive names:
         # Xcode_<ver>_Universal.xip and Xcode_<ver>_Apple_silicon.xip. Any
-        # Xcode 26.x bundles the macOS 26 (Tahoe) SDK; prefer the Universal
-        # archive (its SDK is guaranteed universal arm64+x86_64).
+        # Xcode 26.x bundles the macOS 26 (Tahoe) SDK; findXip picks the newest
+        # one, preferring the Universal archive.
         if [ "$xc26" = 1 ]; then
-            xcode26archive=""
-            for f in Xcode_26*_Universal.xip Xcode_26*_Apple_silicon.xip Xcode_26*.xip; do
-                if [ -f "$f" ]; then
-                    xcode26archive="$f"
-                    break
-                fi
-            done
+            xcode26archive="$(findXip 26)"
             if [ -z "$xcode26archive" ]; then
                 echo "*** You should download Xcode 26.x (provides the macOS 26 Tahoe SDK). Login to:"
                 echo " https://developer.apple.com/downloads/"
@@ -529,15 +682,31 @@ case $1 in
                 missingdmg=1
             fi
         fi
+        # Xcode 27.x bundles the macOS 27 SDK. Xcode 27 is only distributed
+        # as Xcode_<ver>.xip (Apple silicon only); also accept the 26.x-style
+        # _Universal / _Apple_silicon names in case they come back.
+        if [ "$xc27" = 1 ]; then
+            xcode27archive="$(findXip 27)"
+            if [ -z "$xcode27archive" ]; then
+                echo "*** You should download Xcode 27.x (provides the macOS 27 SDK). Login to:"
+                echo " https://developer.apple.com/downloads/"
+                echo "then download from:"
+                echo " https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip"
+                echo "and then run this script from within the same directory as the downloaded file"
+                missingdmg=1
+            fi
+        fi
         if [ "$missingdmg" = 1 ]; then
             echo "*** at least one Xcode distribution is missing, cannot build packages - exiting now"
             exit
         fi
-        if [ "$xc8" = 1 ] || [ "$xc9" = 1 ] || [ "$xc12" = 1 ] || [ "$xc13" = 1 ] || [ "$xc14" = 1 ] || [ "$xc15" = 1 ] || [ "$xc16" = 1 ] || [ "$xc26" = 1 ]; then
-            if [ -e Xcode.app ]; then
-                echo "*** A stray Xcode.app exists in the XcodeLegacy.sh folder. Remove it then try again."
-                exit
-            fi
+        if [ "$(( xc8 + xc9 + xc10 + xc11 + xc12 + xc13 + xc14 + xc15 + xc16 + xc26 + xc27 ))" != 0 ]; then
+            for a in Xcode.app Xcode-beta.app; do
+                if [ -e "$a" ]; then
+                    echo "*** A stray $a exists in the XcodeLegacy.sh folder. Remove it then try again."
+                    exit
+                fi
+            done
         fi
 
         MNTDIR="$(mktemp -d mount.XXX)"
@@ -805,115 +974,43 @@ EOF
             fi
             hdiutil detach "$MNTDIR/Xcode" -force
         fi
-        if [ "$xc8" = 1 ]; then
-            if [ "$osx1012" = 1 ]; then
-                echo "Extracting Mac OS X 10.12 SDK from Xcode 8.3.3. Be patient - this will take some time"
-                xip --expand "$xcode8archive"
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.12.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.12.sdk; tar cf - SDKs/MacOSX10.12.sdk) | gzip -c > Xcode1012SDK.tar.gz) && echo "*** Created Xcode1012SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        # Xcode 8 and later are distributed as .xip archives. Xcode 12 and
+        # later bundle a single, universal (arm64 + x86_64) macOS SDK. The SDK
+        # is renamed to a version-stamped name (e.g. MacOSX11.sdk) so it can
+        # coexist with the SDK shipped by the currently-installed Xcode. See
+        # the comment at the top of the file for the Xcode -> SDK mapping.
+        if [ "$xc8" = 1 ] && [ "$osx1012" = 1 ]; then
+            extractSDKFromXip "$xcode8archive" 10.12 "Mac OS X 10.12"
         fi
-        if [ "$xc9" = 1 ]; then
-            if [ "$osx1013" = 1 ]; then
-                echo "Extracting Mac OS X 10.13 SDK from Xcode 9.4.1. Be patient - this will take some time"
-                xip --expand Xcode_9.4.1.xip
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.13.sdk; tar cf - SDKs/MacOSX10.13.sdk) | gzip -c > Xcode1013SDK.tar.gz) && echo "*** Created Xcode1013SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc9" = 1 ] && [ "$osx1013" = 1 ]; then
+            extractSDKFromXip Xcode_9.4.1.xip 10.13 "Mac OS X 10.13"
         fi
-		if [ "$xc10" = 1 ]; then
-            if [ "$osx1014" = 1 ]; then
-                echo "Extracting Mac OS X 10.14 SDK from Xcode 10.3. Be patient - this will take some time"
-                xip --expand Xcode_10.3.xip
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.14.sdk; tar cf - SDKs/MacOSX10.14.sdk) | gzip -c > Xcode1014SDK.tar.gz) && echo "*** Created Xcode1014SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc10" = 1 ] && [ "$osx1014" = 1 ]; then
+            extractSDKFromXip Xcode_10.3.xip 10.14 "Mac OS X 10.14"
         fi
-		if [ "$xc11" = 1 ]; then
-            if [ "$osx1015" = 1 ]; then
-                echo "Extracting Mac OS X 10.15 SDK from Xcode 11.7. Be patient - this will take some time"
-                xip --expand Xcode_11.7.xip
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm SDKs/MacOSX10.15.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX10.15.sdk; tar cf - SDKs/MacOSX10.15.sdk) | gzip -c > Xcode1015SDK.tar.gz) && echo "*** Created Xcode1015SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc11" = 1 ] && [ "$osx1015" = 1 ]; then
+            extractSDKFromXip Xcode_11.7.xip 10.15 "Mac OS X 10.15"
         fi
-        # Xcode 12 and later are distributed as .xip archives and bundle a
-        # single, universal (arm64 + x86_64) macOS SDK reachable through the
-        # SDKs/MacOSX.sdk symlink. We rename that real directory to a
-        # version-stamped name (e.g. MacOSX11.sdk) so it can coexist with the
-        # SDK shipped by the currently-installed Xcode. See the comment at the
-        # top of the file for the Xcode -> SDK mapping.
-        if [ "$xc12" = 1 ]; then
-            if [ "$osx11" = 1 ]; then
-                echo "Extracting macOS 11 (Big Sur) SDK from Xcode 12.5.1. Be patient - this will take some time"
-                open Xcode_12.5.1.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX11.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX11.sdk; tar cf - SDKs/MacOSX11.sdk) | gzip -c > Xcode11SDK.tar.gz) && echo "*** Created Xcode11SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc12" = 1 ] && [ "$osx11" = 1 ]; then
+            extractSDKFromXip Xcode_12.5.1.xip 11 "macOS 11 (Big Sur)"
         fi
-        if [ "$xc13" = 1 ]; then
-            if [ "$osx12" = 1 ]; then
-                echo "Extracting macOS 12 (Monterey) SDK from Xcode 13.4.1. Be patient - this will take some time"
-                open Xcode_13.4.1.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX12.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX12.sdk; tar cf - SDKs/MacOSX12.sdk) | gzip -c > Xcode12SDK.tar.gz) && echo "*** Created Xcode12SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc13" = 1 ] && [ "$osx12" = 1 ]; then
+            extractSDKFromXip Xcode_13.4.1.xip 12 "macOS 12 (Monterey)"
         fi
-        if [ "$xc14" = 1 ]; then
-            if [ "$osx13" = 1 ]; then
-                echo "Extracting macOS 13 (Ventura) SDK from Xcode 14.3.1. Be patient - this will take some time"
-                open Xcode_14.3.1.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX13.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX13.sdk; tar cf - SDKs/MacOSX13.sdk) | gzip -c > Xcode13SDK.tar.gz) && echo "*** Created Xcode13SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc14" = 1 ] && [ "$osx13" = 1 ]; then
+            extractSDKFromXip Xcode_14.3.1.xip 13 "macOS 13 (Ventura)"
         fi
-        if [ "$xc15" = 1 ]; then
-            if [ "$osx14" = 1 ]; then
-                echo "Extracting macOS 14 (Sonoma) SDK from Xcode 15.4. Be patient - this will take some time"
-                open Xcode_15.4.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX14.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX14.sdk; tar cf - SDKs/MacOSX14.sdk) | gzip -c > Xcode14SDK.tar.gz) && echo "*** Created Xcode14SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc15" = 1 ] && [ "$osx14" = 1 ]; then
+            extractSDKFromXip Xcode_15.4.xip 14 "macOS 14 (Sonoma)"
         fi
-        if [ "$xc16" = 1 ]; then
-            if [ "$osx15" = 1 ]; then
-                echo "Extracting macOS 15 (Sequoia) SDK from Xcode 16.4. Be patient - this will take some time"
-                open Xcode_16.4.xip
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX15.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX15.sdk; tar cf - SDKs/MacOSX15.sdk) | gzip -c > Xcode15SDK.tar.gz) && echo "*** Created Xcode15SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc16" = 1 ] && [ "$osx15" = 1 ]; then
+            extractSDKFromXip Xcode_16.4.xip 15 "macOS 15 (Sequoia)"
         fi
-        if [ "$xc26" = 1 ]; then
-            if [ "$osx26" = 1 ]; then
-                echo "Extracting macOS 26 (Tahoe) SDK from $xcode26archive. Be patient - this will take some time"
-                open "$xcode26archive"
-                while [ ! -d Xcode.app ]; do
-                    sleep 5
-                done
-                sleep 5
-                ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; rm -f SDKs/MacOSX26.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSX26.sdk; tar cf - SDKs/MacOSX26.sdk) | gzip -c > Xcode26SDK.tar.gz) && echo "*** Created Xcode26SDK.tar.gz in directory $(pwd)"
-                rm -rf Xcode.app
-            fi
+        if [ "$xc26" = 1 ] && [ "$osx26" = 1 ]; then
+            extractSDKFromXip "$xcode26archive" 26 "macOS 26 (Tahoe)"
+        fi
+        if [ "$xc27" = 1 ] && [ "$osx27" = 1 ]; then
+            extractSDKFromXip "$xcode27archive" 27 "macOS 27"
         fi
         rmdir "$MNTDIR"
         ;;
@@ -927,47 +1024,62 @@ EOF
             echo " $ sudo $0 install"
             exit 1
         fi
-        if [ ! -d "$PLUGINDIR" ]; then
-            echo "*** Error: could not find Xcode 4.2 in /Developer/Applications nor Xcode >= 4.3 in /Applications, cannot install"
+        if [ ! -d "$GCCDIR" ] || [ ! -d "$PLATFORMDIR" ]; then
+            echo "*** Error: could not find Xcode >= 4.3 in $REQUESTEDAPP nor Xcode <= 4.2 in /Developer/Applications, cannot install"
+            echo "Use -path=/path/to/Xcode.app to select another Xcode."
             exit 1
         fi
+        checkWritable "$GCCDIR"
+        if [ "$compilers" = 1 ] && [ "$(uname -m)" = arm64 ] && ! arch -x86_64 /usr/bin/true 2>/dev/null; then
+            echo "*** Warning: the legacy compilers, assembler and linker are Intel/PowerPC binaries,"
+            echo "which require Rosetta on Apple silicon. Install it with:"
+            echo " $ softwareupdate --install-rosetta --agree-to-license"
+        fi
         if [ "$compilers" = 1 ]; then
-            if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
-                echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
-            else
-                (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.0.xcplugin/legacy" && echo "*** installed XcodePluginGCC40.tar.gz"
-                # Add entries expected by later xcodebuilds.
-                mv "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec" "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original"
-                sed '$ i\
+            # Xcode 4.x-9.x load the GCC plugins from Xcode3Core.ideplugin. Xcode 10
+            # and later (new build system) removed it: the compilers can then only
+            # be used from the command line, e.g. CC=gcc-4.2 or xcodebuild CC=...
+            if [ -d "$PLUGINDIR" ]; then
+                if [ -d "$PLUGINDIR/GCC 4.0.xcplugin" ]; then
+                    echo "*** Not installing XcodePluginGCC40.tar.gz (found installed in $PLUGINDIR/GCC 4.0.xcplugin, uninstall first to force install)"
+                else
+                    (gzip -dc XcodePluginGCC40.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.0.xcplugin/legacy" && echo "*** installed XcodePluginGCC40.tar.gz"
+                    # Add entries expected by later xcodebuilds.
+                    mv "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec" "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original"
+                    sed '$ i\
 \		ExecDescription = \"Compile \$\(InputFile\)\"\;\
 \		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
 \		ExecDescriptionForPrecompile = \"Precompile \$\(InputFile\)\"\;\
 \		ProgressDescriptionForPrecompile = \"Precompiling \$\(InputFile\)\"\;
 '  < "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec-original" > "$PLUGINDIR/GCC 4.0.xcplugin/Contents/Resources/GCC 4.0.xcspec"
 
-                echo "*** modified GCC 4.0.xcspec"
-            fi
-            if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ] && [ ! -f "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC Generic.xcspec" ]; then
-                echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
-            else
-                if [ -f "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC Generic.xcspec" ]; then
-                    mv "$PLUGINDIR/GCC 4.2.xcplugin" "$PLUGINDIR/GCC 4.2.xcplugin-original"
+                    echo "*** modified GCC 4.0.xcspec"
                 fi
-                (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginGCC42.tar.gz"
-                # Add entries expected by later xcodebuilds.
-                mv "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original"
-                sed '$ i\
+                if [ -d "$PLUGINDIR/GCC 4.2.xcplugin" ] && [ ! -f "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC Generic.xcspec" ]; then
+                    echo "*** Not installing XcodePluginGCC42.tar.gz (found installed in $PLUGINDIR/GCC 4.2.xcplugin, uninstall first to force install)"
+                else
+                    if [ -f "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC Generic.xcspec" ]; then
+                        mv "$PLUGINDIR/GCC 4.2.xcplugin" "$PLUGINDIR/GCC 4.2.xcplugin-original"
+                    fi
+                    (gzip -dc XcodePluginGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginGCC42.tar.gz"
+                    # Add entries expected by later xcodebuilds.
+                    mv "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec" "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original"
+                    sed '$ i\
 \		ExecDescription = \"Compile \$\(InputFile\)\"\;\
 \		ProgressDescription = \"Compiling \$\(InputFile\)\"\;\
 \		ExecDescriptionForPrecompile = \"Precompile \$\(InputFile\)\"\;\
 \		ProgressDescriptionForPrecompile = \"Precompiling \$\(InputFile\)\"\;
 '  < "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec-original" > "$PLUGINDIR/GCC 4.2.xcplugin/Contents/Resources/GCC 4.2.xcspec"
-                echo "*** modified GCC 4.2.xcspec"
-            fi
-            if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
-                echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
+                    echo "*** modified GCC 4.2.xcspec"
+                fi
+                if [ -d "$PLUGINDIR/LLVM GCC 4.2.xcplugin" ]; then
+                    echo "*** Not installing XcodePluginLLVMGCC42.tar.gz (found installed in $PLUGINDIR/LLVM GCC 4.2.xcplugin, uninstall first to force install)"
+                else
+                    (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
+                fi
             else
-                (gzip -dc XcodePluginLLVMGCC42.tar.gz | (cd "$PLUGINDIR" || exit; tar xf -)) && touch "$PLUGINDIR/LLVM GCC 4.2.xcplugin/legacy" && echo "*** installed XcodePluginLLVMGCC42.tar.gz"
+                echo "*** Info: Xcode $XCODEMAJOR does not support compiler plugins (no $PLUGINDIR),"
+                echo "not installing the GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins."
             fi
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" ]; then
@@ -981,12 +1093,7 @@ EOF
                 mkdir -p "$GCCINSTALLDIR/usr/libexec/as/x86_64"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc/as" "$GCCINSTALLDIR/usr/libexec/as/ppc/as"
                 ln -sf "$GCCDIR/usr/libexec/gcc/darwin/ppc64/as" "$GCCINSTALLDIR/usr/libexec/as/ppc64/as"
-                # Xcodes >= 4 already include an acceptable GNU legacy assembler
-                # (v1.38) for i386 and x86_64 in $GCCINSTALLDIR/usr/libexec/as.
-                # When they no longer do, enable these links (conditionally,
-                # of course).
-                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/i386/as" "$GCCINSTALLDIR/usr/libexec/as/i386/as"
-                #ln -sf "$GCCDIR/usr/libexec/gcc/darwin/x86_64/as" "$GCCINSTALLDIR/usr/libexec/as/x86_64/as"
+                # (the i386 and x86_64 assemblers are linked below)
 
                 # Replace Xcode's modern toolchain assembler with a script
                 # that auto-selects the proper legacy assembler based on the
@@ -1017,7 +1124,7 @@ EOF
                 # look for as-original, starting in the current dir.
                 # In any case, we prune -m32 and -m64 from the as args.
                 # see https://github.com/devernay/xcodelegacy/issues/33
-                cat <<AS_EOF >> "$GCCINSTALLDIR"/usr/bin/as
+                cat <<AS_EOF > "$GCCINSTALLDIR"/usr/bin/as
 #!/bin/bash
 
 ARCH=''
@@ -1055,7 +1162,7 @@ if [ "\$ARCH_FOUND" -eq '1' ]; then
         fi
 fi
 if [ "\$AS_FOUND" -eq '1' ]; then
-        exec \$AS "\${AS_ARGS[@]}"
+        exec "\$AS" "\${AS_ARGS[@]}"
 else
         if [ -x "\$AS_DIR/as-original" ]; then
                 ASORIGINAL="\$AS_DIR/as-original"
@@ -1070,12 +1177,24 @@ else
                 exit 1
         fi
 
-        exec \$ASORIGINAL "\$@"
+        exec "\$ASORIGINAL" "\$@"
 fi
 AS_EOF
                 chmod +x "$GCCINSTALLDIR/usr/bin/as"
                 echo "*** installed Xcode3as.tar.gz"
             fi
+
+            # Xcode 4 to 9 include an acceptable GNU legacy assembler (v1.38)
+            # for i386 and x86_64 in $GCCINSTALLDIR/usr/libexec/as. Later
+            # Xcodes (at least 16 and later) only have the clang integrated
+            # assembler, so use the Xcode 3 one instead (this is also done
+            # when upgrading an existing installation).
+            for arch in i386 x86_64; do
+                if [ -x "$GCCDIR/usr/libexec/gcc/darwin/$arch/as" ] && [ ! -e "$GCCINSTALLDIR/usr/libexec/as/$arch/as" ]; then
+                    mkdir -p "$GCCINSTALLDIR/usr/libexec/as/$arch"
+                    ln -sf "$GCCDIR/usr/libexec/gcc/darwin/$arch/as" "$GCCINSTALLDIR/usr/libexec/as/$arch/as"
+                fi
+            done
 
             if [ -f "$GCCDIR/usr/libexec/gcc/darwin/ppc/ld" ]; then
                 echo "*** Not installing Xcode3ld.tar.gz (found installed in $GCCDIR/usr/libexec/gcc/darwin/ppc/ld, uninstall first to force install)"
@@ -1108,7 +1227,7 @@ AS_EOF
                 if [ ! -f "$GCCINSTALLDIR/usr/bin/ld-original" ]; then
                     mv "$GCCINSTALLDIR/usr/bin/ld" "$GCCINSTALLDIR/usr/bin/ld-original"
                 fi
-                cat <<LD_EOF >> "$GCCINSTALLDIR"/usr/bin/ld
+                cat <<LD_EOF > "$GCCINSTALLDIR"/usr/bin/ld
 #!/bin/bash
 
 ARCH=''
@@ -1165,7 +1284,6 @@ else
         echo "Error: cannot find ld-original in \$LD_DIR \$LD_DIR/../../../../bin or \$LD_DIR/../../../../../bin"
         exit 1
 fi
-LD_RESULT=255
 if [ "\$USE_OLD_LD" -eq '1' ]; then
         ARGS=()
         # strip the -dependency_info xxx, -object_path_lto xxx, -no_deduplicate, -export_dynamic flags
@@ -1211,14 +1329,12 @@ if [ "\$USE_OLD_LD" -eq '1' ]; then
                 exit 1
         fi
         
-        \`\$LD "\${ARGS[@]}"\`
-        LD_RESULT=\$?
+        # (do not use backquotes here: they would run ld's output as a command,
+        # which breaks e.g. "ld -v" or "ld -version_details", used by Xcode)
+        exec "\$LD" "\${ARGS[@]}"
 else
-        \`\$LDORIGINAL "\$@"\`
-        LD_RESULT=\$?
+        exec "\$LDORIGINAL" "\$@"
 fi
-
-exit \$LD_RESULT
 LD_EOF
                 chmod +x "$GCCINSTALLDIR/usr/bin/ld"
                 echo "*** installed Xcode3ld.tar.gz"
@@ -1226,6 +1342,10 @@ LD_EOF
 
             if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
                 echo "*** Not modifying MacOSX Architectures.xcspec (found original at $PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original, uninstall first to force install)"
+            elif [ ! -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec" ]; then
+                # Xcode >= 10 moved the architecture specs into its build system
+                # frameworks; PPC archs cannot be selected in Xcode projects there.
+                echo "*** Info: Xcode $XCODEMAJOR has no MacOSX Architectures.xcspec, not adding the PPC architectures"
             else
                 mv "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"
                 { awk 'NR>1{print l}{l=$0}' "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original"; cat - <<SPEC_EOF; } > "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
@@ -1360,6 +1480,10 @@ SPEC_EOF
             installSDK 26
         fi
 
+        if [ "$osx27" = 1 ]; then
+            installSDK 27
+        fi
+
         if [ "$compilers" = 1 ]; then
             if [ -f /usr/bin/gcc-4.0 ]; then
                 #echo "*** Not installing xcode_3.2.6_gcc4.0.pkg (found installed in /usr/bin/gcc-4.0, uninstall first to force install)"
@@ -1445,10 +1569,20 @@ SPEC_EOF
             echo "*** modified MacOSX Info.plist"
         fi
 
-        if [ ! -L /Developer/SDKs ] && [ $XCODE42 -ne 1 ]; then
-            echo "*** Warning: /Developer/SDKs should be a symlink to $SDKDIR/SDKs"
-            echo "Check that /Developer exists, and fix /Developer/SDKs with:"
-            echo " $ sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
+        if [ $XCODE42 -ne 1 ] && ! [ /Developer/SDKs -ef "$SDKDIR/SDKs" ]; then
+            echo "*** Info: the SDKs were installed in $SDKDIR/SDKs"
+            if [ "$RELEASENUM" -ge 19 ]; then
+                # macOS 10.15 Catalina and later have a read-only system
+                # volume: /Developer can only be created with synthetic.conf.
+                echo "To also access them as /Developer/SDKs (as in the README examples), add a"
+                echo "/Developer symlink to /etc/synthetic.conf and reboot, e.g. with:"
+                # shellcheck disable=SC2028 # the backslashes are meant to be printed
+                echo " $ printf 'Developer\\t%s\\n' '$SDKDIR' | sudo tee -a /etc/synthetic.conf"
+                echo "Alternatively, use e.g. -isysroot \"\$(xcrun --sdk macosx10.6 --show-sdk-path)\""
+            else
+                echo "To also access them as /Developer/SDKs, create that symlink with:"
+                echo " $ sudo mkdir -p /Developer && sudo ln -sf '$SDKDIR/SDKs' /Developer/SDKs"
+            fi
         fi
         ;;
 
@@ -1515,6 +1649,9 @@ SPEC_EOF
         if [ "$osx26" = 1 ]; then
             rm Xcode26SDK.tar.gz 2>/dev/null
         fi
+        if [ "$osx27" = 1 ]; then
+            rm Xcode27SDK.tar.gz 2>/dev/null
+        fi
 
         ;;
 
@@ -1526,6 +1663,10 @@ SPEC_EOF
             echo "*** Error: The uninstall phase requires administrative rights. Please run it as:"
             echo " $ sudo $0 uninstall"
             exit 1
+        fi
+        # (if Xcode was removed, still clean up the links outside of it)
+        if [ -d "$GCCDIR" ]; then
+            checkWritable "$GCCDIR"
         fi
 
         if [ "$compilers" = 1 ]; then
@@ -1547,16 +1688,24 @@ SPEC_EOF
                          "$GCCDIR/usr/libexec/gcc/darwin/x86_64" \
                          "$GCCINSTALLDIR/usr/libexec/as/ppc" \
                          "$GCCINSTALLDIR/usr/libexec/as/ppc64" \
+                         "$GCCINSTALLDIR/usr/libexec/as/i386/as" \
+                         "$GCCINSTALLDIR/usr/libexec/as/x86_64/as" \
                          "$GCCINSTALLDIR/usr/libexec/ld/ppc" \
                          "$GCCINSTALLDIR/usr/libexec/ld/ppc7400" \
                          "$GCCINSTALLDIR/usr/libexec/ld/ppc970" \
                          "$GCCINSTALLDIR/usr/libexec/ld/ppc64" \
                          "$GCCINSTALLDIR/usr/libexec/ld/i386" \
                          "$GCCINSTALLDIR/usr/libexec/ld/x86_64"; do
-                    if [ -e "$f" ]; then
+                    if [ -L "$f" ]; then
+                            # links to the Xcode 3 i386/x86_64 assemblers
+                            case "$(readlink "$f")" in
+                                */usr/libexec/gcc/darwin/*/as) rm -f "$f" ;;
+                            esac
+                    elif [ -e "$f" ] && [ "$(basename "$f")" != as ]; then
                             rm -rf "$f"
                     fi
             done
+            rmdir "$GCCINSTALLDIR/usr/libexec/as/i386" "$GCCINSTALLDIR/usr/libexec/as/x86_64" "$GCCINSTALLDIR/usr/libexec/as" 2>/dev/null || :
             if [ -f "$GCCINSTALLDIR/usr/bin/as-original" ]; then
                 rm "$GCCINSTALLDIR/usr/bin/as"
                 mv -f "$GCCINSTALLDIR/usr/bin/as-original" "$GCCINSTALLDIR/usr/bin/as"
@@ -1565,8 +1714,16 @@ SPEC_EOF
                 rm "$GCCINSTALLDIR/usr/bin/ld"
                 mv -f "$GCCINSTALLDIR/usr/bin/ld-original" "$GCCINSTALLDIR/usr/bin/ld"
             fi
-            # preserve original LLVM-GCC on Xcode 4 and earlier
-            if [ ! -d "$GCCDIR/Library/Perl" ] || [ -d "$GCCDIR/Library/Perl/5.10" ]; then
+            # preserve original LLVM-GCC on Xcode 4 and earlier (Xcode >= 10
+            # also has no Library/Perl, so check the version first)
+            if [ "$XCODEMAJOR" -ge 5 ]; then
+                xcode4=0
+            elif [ "$XCODEMAJOR" -ge 1 ] || [ ! -d "$GCCDIR/Library/Perl" ] || [ -d "$GCCDIR/Library/Perl/5.10" ]; then
+                xcode4=1
+            else
+                xcode4=0
+            fi
+            if [ "$xcode4" = 1 ]; then
                 mv "$GCCDIR"/usr/bin/{gcov,i686-apple-darwin"$RELEASENUM"-llvm-g{++,cc},llvm-{cpp,g++,gcc}}-4.2 "$GCCDIR"
                 # $GCCFILES is a space-separated list of paths containing glob
                 # patterns and must remain unquoted for word-splitting/globbing.
@@ -1582,10 +1739,10 @@ SPEC_EOF
             fi
             # shellcheck disable=SC2086
             (cd "$GCCINSTALLDIR" || exit; rm -rf $GCCFILES $LLVMGCCFILES)
-            rmdir "$GCCINSTALLDIR/usr/include/gcc/darwin" "$GCCINSTALLDIR/usr/include/gcc" || :
-            rmdir "$GCCINSTALLDIR/usr/lib/"{i686-apple-darwin10,powerpc-apple-darwin10}"/4.2.1" "$GCCINSTALLDIR/usr/lib/"{gcc/,}{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/lib/gcc" || :
-            rmdir "$GCCINSTALLDIR/usr/libexec/gcc/"{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/libexec/gcc" "$GCCINSTALLDIR/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" || :
-            rmdir "$GCCINSTALLDIR/usr/share/man/man7" || :
+            rmdir "$GCCINSTALLDIR/usr/include/gcc/darwin" "$GCCINSTALLDIR/usr/include/gcc" 2>/dev/null || :
+            rmdir "$GCCINSTALLDIR/usr/lib/"{i686-apple-darwin10,powerpc-apple-darwin10}"/4.2.1" "$GCCINSTALLDIR/usr/lib/"{gcc/,}{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/lib/gcc" 2>/dev/null || :
+            rmdir "$GCCINSTALLDIR/usr/libexec/gcc/"{i686-apple-darwin10,powerpc-apple-darwin10} "$GCCINSTALLDIR/usr/libexec/gcc" "$GCCINSTALLDIR/usr/libexec/ld" "$GCCDIR/usr/libexec/gcc/darwin" "$GCCDIR/usr/libexec/gcc" 2>/dev/null || :
+            rmdir "$GCCINSTALLDIR/usr/share/man/man7" 2>/dev/null || :
             if [ -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" ]; then
                 rm "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
                 mv -f "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec-original" "$PLATFORMDIR/Developer/Library/Xcode/Specifications/MacOSX Architectures.xcspec"
@@ -1662,6 +1819,10 @@ SPEC_EOF
         fi
         if [ "$osx26" = 1 ]; then
             i=26
+            [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
+        fi
+        if [ "$osx27" = 1 ]; then
+            i=27
             [ -f "$SDKDIR/SDKs/MacOSX${i}.sdk/legacy" ] && rm -rf "$SDKDIR/SDKs/MacOSX${i}.sdk"
         fi
         

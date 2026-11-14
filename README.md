@@ -1,7 +1,7 @@
 XcodeLegacy
 ===========
 
-Legacy components for Xcode 4-16 (deprecated compilers and Mac OS X / macOS SDKs).
+Legacy components for Xcode 4-27 (deprecated compilers and Mac OS X / macOS SDKs), on host macOS versions up to macOS 27.
 
 Home page: https://github.com/devernay/xcodelegacy
 
@@ -23,14 +23,18 @@ I made the script XcodeLegacy.sh to extract these components (the links work if 
 [Xcode 12.5.1](https://download.developer.apple.com/Developer_Tools/Xcode_12.5.1/Xcode_12.5.1.xip) (macOS 11 SDK),
 [Xcode 13.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_13.4.1/Xcode_13.4.1.xip) (macOS 12 SDK),
 [Xcode 14.3.1](https://download.developer.apple.com/Developer_Tools/Xcode_14.3.1/Xcode_14.3.1.xip) (macOS 13 SDK),
-[Xcode 15.4](https://download.developer.apple.com/Developer_Tools/Xcode_15.4/Xcode_15.4.xip) (macOS 14 SDK) and
-[Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) (macOS 15 SDK)
-and install them in Xcode 4-16:
+[Xcode 15.4](https://download.developer.apple.com/Developer_Tools/Xcode_15.4/Xcode_15.4.xip) (macOS 14 SDK),
+[Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) (macOS 15 SDK),
+[Xcode 26.6](https://download.developer.apple.com/Developer_Tools/Xcode_26.6/Xcode_26.6_Universal.xip) (macOS 26 SDK) and
+[Xcode 27.2](https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip) (macOS 27 SDK)
+and install them in Xcode 4-27:
 
 - GCC 4.0, GCC 4.2 and LLVM GCC 4.2 compilers
-- GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins
+- GCC 4.0, GCC 4.2 and LLVM GCC 4.2 Xcode plugins (Xcode 4-9 only, see "Using XcodeLegacy on recent macOS and Xcode" below)
 - PPC assembler
-- Mac OS X / macOS SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 11, 12, 13, 14, 15
+- Mac OS X / macOS SDK 10.4u, 10.5, 10.6, 10.7, 10.8, 10.9, 10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 11, 12, 13, 14, 15, 26, 27
+
+Installing a newer SDK into an older Xcode can also be useful, e.g. the macOS 26 or 27 SDK into Xcode 26.3, which is the latest Xcode that runs on macOS 15 Sequoia. This works for C, C++ and Objective-C (tested: the macOS 26.5 SDK with Xcode 16.4), but not for Swift, because the Swift modules of an SDK require the Swift compiler it was released with.
 
 The script also fixes a few known bugs in the 10.4, 10.5 and 10.6 SDK.
 
@@ -50,7 +54,7 @@ Open a Terminal application, change to the directory where `XcodeLegacy.sh`, and
 cd path/to/xcodelegacy
 chmod +x XcodeLegacy.sh
 ```
-Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-16), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-16).
+Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-27), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-27).
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
@@ -74,7 +78,26 @@ Optionally, one of the following options can be passed as the *first* argument t
 * `-osx13` : only install macOS 13 (Ventura) SDK
 * `-osx14` : only install macOS 14 (Sonoma) SDK
 * `-osx15` : only install macOS 15 (Sequoia) SDK
-* `-path=path` : install to custom Xcode at 'path'
+* `-osx26` : only install macOS 26 (Tahoe) SDK
+* `-osx27` : only install macOS 27 SDK
+* `-path=path` : install to custom Xcode at 'path' (default: `/Applications/Xcode.app`, or the Xcode selected with `xcode-select` if that does not exist, e.g. `/Applications/Xcode_16.4.app`)
+
+The options can be combined, and must come before the action, e.g. `sudo ./XcodeLegacy.sh -osx14 -osx15 -path=/Applications/Xcode_26.3.app install`.
+
+Using XcodeLegacy on recent macOS and Xcode
+-------------------------------------------
+
+On macOS 13 Ventura and later (including macOS 15 Sequoia, 26 Tahoe and 27), and with Xcode 10 and later:
+
+- **App Management permission.** macOS prevents modifying signed applications such as Xcode, even as root, unless the application running the script (Terminal, iTerm, or `sshd-keygen-wrapper` for ssh sessions) is enabled in *System Settings > Privacy & Security > App Management* (or *Full Disk Access*). `install` and `uninstall` check this first and explain what to do.
+- **No compiler plugins.** Xcode 10 and later (new build system) no longer load the GCC Xcode plugins, and have no `MacOSX Architectures.xcspec` to add PPC architectures to. `install -compilers` skips these, and installs the compilers, the PPC assembler and the legacy linker as command-line tools (`gcc-4.2`, `g++-4.2`, etc. in `/usr/local/bin`), to be used e.g. with `CC=gcc-4.2` from Makefile/configure builds.
+- **Rosetta.** The legacy compilers, assembler and linker are Intel/PowerPC binaries, so on Apple silicon they need Rosetta 2 (`softwareupdate --install-rosetta --agree-to-license`), and can at best produce `x86_64` code (see the Apple Silicon section below). Apple announced that macOS 27 is the last release with general-purpose Rosetta support.
+- **No `/Developer`.** Since macOS 10.15 Catalina the system volume is read-only, so `/Developer/SDKs` (used in the examples below) cannot be created directly. Either use the full path of the SDK (`/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk`, or `$(xcrun --sdk macosx10.6 --show-sdk-path)`), or add a `/Developer` symlink through `/etc/synthetic.conf` and reboot:
+  ```
+  printf 'Developer\t%s\n' /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer | sudo tee -a /etc/synthetic.conf
+  ```
+- **Several Xcodes.** CI images often install Xcode as e.g. `/Applications/Xcode_16.4.app`. The script uses the Xcode selected with `xcode-select` when `/Applications/Xcode.app` does not exist; use `-path=` to select another one.
+- **`.xip` extraction** uses `xip --expand`, so `buildpackages` also works without a GUI session (e.g. over ssh). It needs as much free disk space in the current directory as the expanded Xcode (e.g. 4.5 GB for Xcode 16.4; older Xcodes, which bundle the iOS platforms, are much larger).
 
 
 Using the older SDKs
@@ -142,7 +165,10 @@ Here are the latest versions of Xcode that are known to /run/ on each OS X versi
 - [Xcode 13.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_13.4.1/Xcode_13.4.1.xip) on macOS 12 (Monterey).
 - [Xcode 14.3.1](https://download.developer.apple.com/Developer_Tools/Xcode_14.3.1/Xcode_14.3.1.xip) on macOS 13 (Ventura).
 - [Xcode 15.4](https://download.developer.apple.com/Developer_Tools/Xcode_15.4/Xcode_15.4.xip) on macOS 14 (Sonoma).
-- [Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) on macOS 15 (Sequoia).
+- [Xcode 16.4](https://download.developer.apple.com/Developer_Tools/Xcode_16.4/Xcode_16.4.xip) on macOS 15.3 to 15.5 (Sequoia).
+- [Xcode 26.3](https://download.developer.apple.com/Developer_Tools/Xcode_26.3/Xcode_26.3_Universal.xip) on macOS 15.6 or later (Sequoia). Xcode 26.4 and later require macOS 26.2.
+- [Xcode 26.6](https://download.developer.apple.com/Developer_Tools/Xcode_26.6/Xcode_26.6_Universal.xip) on macOS 26.2 to 26.5 (Tahoe).
+- [Xcode 27.2](https://download.developer.apple.com/Developer_Tools/Xcode_27.2/Xcode_27.2.xip) on macOS 26.6 or later (Tahoe) and macOS 27. Xcode 27 is Apple silicon only.
 
 Xcode 12.4 and earlier require macOS 10.15.4 or older and are `x86_64`-only, so they **cannot run on Apple Silicon** (which needs macOS 11+); see the Apple Silicon section below.
 
@@ -230,7 +256,7 @@ Upgrading XcodeLegacy for a new Xcode / SDK version
 
 Each new major Xcode drops the oldest bundled macOS SDK. XcodeLegacy's job is to grab that dropped SDK from the last Xcode that shipped it. When a new Xcode removes an SDK you still need, add support like this. The naming convention below matches the existing code.
 
-**0. Find the mapping.** Determine which macOS SDK the new Xcode removed and which older Xcode is the last one that still bundles it. [xcodereleases.com](https://xcodereleases.com/) (also available as `https://xcodereleases.com/data.json`) lists, for every release, its bundled `macOS` SDK, its exact `download` URL, and the minimum macOS required to run it. As of Xcode 16 the mapping is:
+**0. Find the mapping.** Determine which macOS SDK the new Xcode removed and which older Xcode is the last one that still bundles it. [xcodereleases.com](https://xcodereleases.com/) (also available as `https://xcodereleases.com/data.json`) lists, for every release, its bundled `macOS` SDK, its exact `download` URL, and the minimum macOS required to run it. As of Xcode 27 the mapping is:
 
 | Source Xcode | Bundled macOS SDK | Option added |
 |--------------|-------------------|--------------|
@@ -240,8 +266,10 @@ Each new major Xcode drops the oldest bundled macOS SDK. XcodeLegacy's job is to
 | 14.3.1       | 13 (Ventura)      | `-osx13`     |
 | 15.4         | 14 (Sonoma)       | `-osx14`     |
 | 16.4         | 15 (Sequoia)      | `-osx15`     |
+| 26.x         | 26 (Tahoe)        | `-osx26`     |
+| 27.x         | 27                | `-osx27`     |
 
-So, e.g., to add the macOS 16 SDK once a future Xcode drops it, you would extract it from Xcode 16.4 (or whichever release last bundles it).
+Apple jumped from Xcode 16 / macOS 15 to the year-based Xcode 26 / macOS 26, so there is no Xcode 17-25 or macOS 16-25. To add the macOS 28 SDK, you would extract it from the last Xcode 28.x release.
 
 **1. Add the option flag.** In `XcodeLegacy.sh`, near the top add an initializer `osxNN=0` (use `osx11`-style names for macOS 11+, `osx10NN` for 10.x). Add a matching `-osxNN)` case in the argument-parsing `while` loop (set `osxNN=1; gotoption=1; shift`), add `osxNN=1` to the "no option given -> do everything" block, and add the option to the two usage `echo` lines and the SDK list.
 
@@ -259,20 +287,12 @@ if [ "$xcNN" = 1 ] && [ ! -f Xcode_X.Y.Z.xip ]; then
     missingdmg=1
 fi
 ```
-Also add `$xcNN` to the "stray Xcode.app" guard for `.xip`-based sources.
+Also add `$xcNN` to the sum in the "stray Xcode.app" guard for `.xip`-based sources. If the source is "any release of a major Xcode" (like 26.x and 27.x), use `xcodeNNarchive="$(findXip NN)"`, which picks the newest `Xcode_NN*.xip` in the current directory (preferring `_Universal` archives).
 
-**4. Add the extraction** (still PHASE 1). Modern Xcode ships one universal SDK reachable via the `SDKs/MacOSX.sdk` symlink; rename it to a version-stamped directory and tar it:
+**4. Add the extraction** (still PHASE 1). Modern Xcode ships one universal SDK in `SDKs/MacOSX.sdk`; the `extractSDKFromXip` helper expands the `.xip` with `xip --expand`, renames that SDK to a version-stamped directory and tars it:
 ```sh
-if [ "$xcNN" = 1 ]; then
-    if [ "$osxMM" = 1 ]; then
-        open Xcode_X.Y.Z.xip
-        while [ ! -d Xcode.app ]; do sleep 5; done
-        sleep 5
-        ( (cd "Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer" || exit; \
-           rm -f SDKs/MacOSXNN.sdk; mv SDKs/MacOSX.sdk SDKs/MacOSXNN.sdk; \
-           tar cf - SDKs/MacOSXNN.sdk) | gzip -c > XcodeNNSDK.tar.gz )
-        rm -rf Xcode.app
-    fi
+if [ "$xcNN" = 1 ] && [ "$osxMM" = 1 ]; then
+    extractSDKFromXip Xcode_X.Y.Z.xip NN "macOS NN (Name)"
 fi
 ```
 The tarball name `XcodeNNSDK.tar.gz` must match what `installSDK` expects (it derives it from the SDK version with the dot removed).
@@ -358,3 +378,4 @@ History
 - 2.5 (31/04/2021): Xcode 11 dropped 10.14 SDK, get it from Xcode 10.3
 - 2.6 (01/05/2021): Xcode 12 dropped 10.15 SDK, get it from Xcode 11.7
 - 2.7 (23/07/2026): Support macOS 11-15 SDKs (from Xcode 12.5.1, 13.4.1, 14.3.1, 15.4, 16.4); add `-osx11`/`-osx12`/`-osx13`/`-osx14`/`-osx15` options; document Apple Silicon (arm64) behavior and how to upgrade the script; fix shellcheck warnings and a bug where the Xcode 4.6.3 archive named `xcode4630916281a.dmg` was not detected during buildpackages
+- 2.8 (14/11/2026): Support macOS 15 Sequoia and later hosts and Xcode 16-27: add the macOS 27 SDK (`-osx27`, from Xcode 27.x); `install` no longer aborts on Xcode 10 and later (compiler plugins and PPC architecture spec are skipped, compilers are installed as command-line tools); use the Xcode selected by `xcode-select` if `/Applications/Xcode.app` does not exist; expand `.xip` archives with `xip --expand` (also handles `Xcode-beta.app`); fix the `ld` wrapper, which executed the output of `ld` as a command (breaking `ld -version_details`, used by Xcode 15 and later); check for App Management permission and Rosetta; fix `uninstall` on Xcode 10 and later, which was mistaken for Xcode 4; explain how to provide `/Developer/SDKs` on read-only system volumes
