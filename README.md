@@ -49,12 +49,14 @@ Download
 Usage
 -----
 
-Open a Terminal application, change to the directory where `XcodeLegacy.sh`, and make it executable, as in:
+Open a Terminal application, change to the directory where `XcodeLegacy.sh` is, and make it executable, as in:
 ```
 cd path/to/xcodelegacy
 chmod +x XcodeLegacy.sh
 ```
 Execute the script by typing `./XcodeLegacy.sh <arg>`. The script takes one argument, which can be "buildpackages" (to extract components from the legacy Xcode downloads to the current directory), "install" (to install the components in Xcode 4-27), "cleanpackages" (to delete the extracted components from the current directory), "uninstall" (to uninstall the components from Xcode 4-27).
+
+The Xcode archives are read from, and the extracted components written to, the current directory. The script itself can be elsewhere (e.g. `cd ~/Downloads && path/to/xcodelegacy/XcodeLegacy.sh buildpackages`), but keep `hashtable-gcc-4.0.4` next to `XcodeLegacy.sh`: it is needed to fix the 10.4, 10.5 and 10.6 SDKs.
 
 With the "install" or "uninstall" arguments, the script uses sudo to become root, and will thus ask for your password. Please check the script contents before executing it.
 
@@ -379,3 +381,4 @@ History
 - 2.6 (01/05/2021): Xcode 12 dropped 10.15 SDK, get it from Xcode 11.7
 - 2.7 (23/07/2026): Support macOS 11-15 SDKs (from Xcode 12.5.1, 13.4.1, 14.3.1, 15.4, 16.4); add `-osx11`/`-osx12`/`-osx13`/`-osx14`/`-osx15` options; document Apple Silicon (arm64) behavior and how to upgrade the script; fix shellcheck warnings and a bug where the Xcode 4.6.3 archive named `xcode4630916281a.dmg` was not detected during buildpackages
 - 2.8 (14/11/2026): Support macOS 15 Sequoia and later hosts and Xcode 16-27: add the macOS 27 SDK (`-osx27`, from Xcode 27.x); `install` no longer aborts on Xcode 10 and later (compiler plugins and PPC architecture spec are skipped, compilers are installed as command-line tools); use the Xcode selected by `xcode-select` if `/Applications/Xcode.app` does not exist; expand `.xip` archives with `xip --expand` (also handles `Xcode-beta.app`); fix the `ld` wrapper, which executed the output of `ld` as a command (breaking `ld -version_details`, used by Xcode 15 and later); check for App Management permission and Rosetta; fix `uninstall` on Xcode 10 and later, which was mistaken for Xcode 4; explain how to provide `/Developer/SDKs` on read-only system volumes; 10.5 SDK: keep the ppc64 slice of `libgcc_s.10.5.dylib` (AliceLR, #74); `xip --expand` contributed by Eric Knibbe (#71)
+- 2.9 (14/11/2026): Do not install the GCC Xcode plugins on Xcode 10-12, they break every build with the new build system (#49); `ld` wrapper: only use the old linker for Intel archs if both the target and the SDK are 10.6 or older, which fixes "ld: warning: bad symbol action" with recent SDKs (#54); look for `hashtable-gcc-4.0.4` next to the script so it can be run from the directory containing the Xcode archives (#70)
