@@ -11,12 +11,12 @@ Description
 Many components were removed in recent versions of Xcode, the most notable being the Mac OS X 10.6 SDK, which is required to build software using the Carbon API (such as wxWidgets 2.8).
 
 I made the script XcodeLegacy.sh to extract these components (the links work if you [sign in to Apple Developer](https://developer.apple.com/downloads/) first) from
-[Xcode 3.2.6](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) (10.4, 10.5 and 10.6 SDKs, PPC assembler, GCC 4.0 and 4.2, LLVM-GCC 4.2),
+[Xcode 3.2.6](https://download.developer.apple.com/Developer_Tools/xcode_3.2.6_and_ios_sdk_4.3__final/xcode_3.2.6_and_ios_sdk_4.3.dmg) (10.4, 10.5 and 10.6 SDKs, PPC assembler, GCC 4.0 and 4.2, LLVM-GCC 4.2),
 [Xcode 4.6.3](https://download.developer.apple.com/Developer_Tools/xcode_4.6.3/Xcode_4.6.3.dmg) (10.7 SDK),
 [Xcode 5.1.1](https://download.developer.apple.com/Developer_Tools/xcode_5.1.1/Xcode_5.1.1.dmg) (10.8 SDK),
-[Xcode 6.4](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) (10.9 and 10.10 SDKs),
+[Xcode 6.4](https://download.developer.apple.com/Developer_Tools/Xcode_6.4/Xcode_6.4.dmg) (10.9 and 10.10 SDKs),
 [Xcode 7.3.1](https://developer.apple.com/devcenter/download.action?path=/Developer_Tools/Xcode_7.3.1/Xcode_7.3.1.dmg) (10.11 SDK),
-[Xcode 8.3.3](https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode8.3.3.xip) (10.12 SDK),
+[Xcode 8.3.3](https://download.developer.apple.com/Developer_Tools/Xcode_8.3.3/Xcode_8.3.3.xip) (10.12 SDK),
 [Xcode 9.4.1](https://download.developer.apple.com/Developer_Tools/Xcode_9.4.1/Xcode_9.4.1.xip) (10.13 SDK),
 [Xcode 10.3](https://download.developer.apple.com/Developer_Tools/Xcode_10.3/Xcode_10.3.xip) (10.14 SDK)
 [Xcode 11.7](https://download.developer.apple.com/Developer_Tools/Xcode_11.7/Xcode_11.7.xip) (10.15 SDK),
