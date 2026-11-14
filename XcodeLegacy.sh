@@ -728,11 +728,27 @@ EOF
 
                 if [ "$osx105" = 1 ]; then
                     # we also need to copy /usr/lib/libgcc_s.10.5.dylib from 10.6 SDK to 10.5SDK, see https://trac.macports.org/wiki/LeopardSDKFixes
+                    # Do this by combining it with the PowerPC64 library from the 10.5 SDK so it doesn't break PowerPC64 builds.
                     # This should fix compiling the following:
                     # int main() { __uint128_t a = 100; __uint128_t b = 200; __uint128_t c = a / b; return 0; }
                     # with clang -isysroot /Developer/SDKs/MacOSX10.5.sdk -Wl,-syslibroot,/Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5 conftest1.c
-                    cp /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib.bak
-                    cp $SDKROOT/usr/lib/libgcc_s.10.5.dylib /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib/libgcc_s.10.5.dylib
+                    # Recent lipo versions (at least Xcode 27) no longer support
+                    # PowerPC: "-extract ppc64" fails and "-create" silently drops
+                    # PPC slices, so verify the result, and fall back to the plain
+                    # 10.6 library (without ppc64) if the merge is not possible.
+                    (
+                    cd /tmp/XC3-10.5/SDKs/MacOSX10.5.sdk/usr/lib || exit
+                    cp libgcc_s.10.5.dylib libgcc_s.10.5.dylib.bak
+                    if lipo libgcc_s.10.5.dylib.bak -extract ppc64 -output _ppc64.dylib 2>/dev/null &&
+                       lipo -create "$SDKROOT/usr/lib/libgcc_s.10.5.dylib" _ppc64.dylib -output _merged.dylib 2>/dev/null &&
+                       lipo _merged.dylib -verify_arch ppc7400 ppc64 i386 x86_64 2>/dev/null; then
+                        mv _merged.dylib libgcc_s.10.5.dylib
+                    else
+                        echo "*** Warning: this lipo cannot handle PowerPC binaries: not adding ppc64 to libgcc_s.10.5.dylib"
+                        cp "$SDKROOT/usr/lib/libgcc_s.10.5.dylib" libgcc_s.10.5.dylib
+                    fi
+                    rm -f _ppc64.dylib _merged.dylib
+                    )
 
                     ( (cd /tmp/XC3-10.5 || exit; tar cf - SDKs/MacOSX10.5.sdk) | gzip -c > Xcode105SDK.tar.gz) && echo "*** Created Xcode105SDK.tar.gz in directory $(pwd)"
                 fi
